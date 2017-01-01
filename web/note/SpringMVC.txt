@@ -1,0 +1,308 @@
+Spring集成Mybatis
+
+listener : 监听http对象的状态变化
+filter：对请求进行筛选和过滤
+Servlet：完成web程序中的功能逻辑
+
+MVC架构模式要求一定要存在前端控制器，而且一定要由servlet实现
+
+
+
+搭建流程
+	1）引入jar包
+		SPRING-HOME/lib/*.jar
+		commons-logging-1.1.1.jar
+		jstl.jar
+		standard.jar
+	2)配置前端控制器
+		<servlet>
+			<servlet-name>springmvc</servlet-name>
+			<servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+			<load-on-startup>1</load-on-startup>
+		</servlet>
+		<servlet-mapping>
+			<servlet-name>springmvc</servlet-name>
+			<url-pattern>/</url-pattern>
+		</servlet-mapping>
+		
+	3)增加配置文件
+		配置文件的名称必须和s ervlet的名称保持一致
+		/WEB-INF/springmvc-servlet.xml
+		
+	4)配置映射器和适配器
+		<bean class = "org.springframework.web.servlet.handler.BeanNameUrlHandlerMapping"></bean>
+		<bean class = "org.springframework.web.servlet.mvc.SimpleControllerHandlerAdapter"></bean>
+		
+	5)配置视图解析器
+		<bean class = "org.springframework.web.servlet.view.InternalResourceViewResolver">
+			<property name = "viewClass" value = "org.springframework.web.servlet.view.JstlView"></property>
+			<property name = "preffix" value = "/WEB-INF/jsp/"</property>
+			<property name = "suffix" value = ".jsp"</property>
+		</bean>
+		
+		从当前的web应用中查找指定的资源，遵循查找的规则
+		页面路径为：视图的前缀+视图的名称+视图后缀
+		
+	6）配置控制器
+		<bean name = "/hello" class = "xxx.xxx.xxx.xxxController">
+	7）在指定位置增加页面
+	
+	8）访问页面
+			在页面中通过EL表达式获取模型中的数据
+			
+处理映射器
+	将请求路径和控制器进行关联映射，当用户发送请求
+		
+	BeanNameUrlHandlerMapping
+		将<bean>标签的name属性作为映射和url进行关联
+		<bean name="/hello" class="xxx.xxx.xxx.controller.HelloWorldController">
+		
+	将请求路径和控制器的映射关系独立出来。
+		使用SimpleUrlHandlerMapping
+		<bean class = "org.springframework.web.servlet.handler.SimpleUrlHandlerMapping">
+			<property name = "urlMap">
+				<map>	
+					<entry key = "/hello" value-ref="helloWorldController"></entry>
+				</map>
+			</property>
+		</bean>
+		
+	如果一个相对路径以斜杠开头，那么是特殊的相对路径，改变了默认的基准路径的位置。
+		eg:url="http://localhost:8080/mvc/test/testServlet"
+		1)前台路径(浏览器解析执行的代码中的路径)，会以web服务器的根路径为基准
+			web服务器的根路径：http://localhost:8080/
+		2）后台路径(服务器解析执行的代码中的路径)，以web应用的根路径为基准
+			web应用的根路径：http://localhost:8080/mvc/
+			
+拦截器
+	拦截器的功能就是对业务功能的补充。
+	
+	对请求和响应进行拦截，拦截后进行业务的操作，和过滤器的实现方式类似
+	
+	创建自定义拦截器：
+		a)创建类 ，继承HandlerInterceptorAdapter
+		b)重写方法：
+			afterCompletion:拦截器执行完毕后执行此方法
+			postHandle：在执行控制器之后执行，进行响应的验证
+			preHandle:在执行控制器之前执行，进行请求的验证。验证通过(return true),验证失败(return false),对请求不响应
+		c)配置拦截器
+		 	<bean id="log" class="xxx.xxx.xxx.LogInterceptor"></bean>
+		d)应用拦截器
+			<bean class = "org.springframework.web.servlet.handler.SimpleUrlHandlerMapping">
+				<property name = "urlMap">
+					<map>	
+						<entry key = "/hello" value-ref="helloWorldController"></entry>
+					</map>
+				</property>
+				<property name = "interceptors">
+					<list>
+						<ref bean="log"/>
+					<list>
+				</property>
+			</bean>
+			
+控制器
+	在SpringMVC框架中，控制器必须实现Controller接口，遵循规范。
+	public class HelloWorldController implements Controller{
+		public ModelAndView handlerRequest(HttpServletRequest req,
+									HttpServletResponse resp) throws Exception{
+									
+									}
+	}
+	
+	该方法由适配器进行调用
+	
+	控制器的实现方式：
+		a)Controller(interface)
+			实现handleRequest方法
+		b)AbstractController(class)
+			实现handleReuquestInternal方法
+		  在该类中可配置属性supportedMethods，设置支持的提交方式
+		  <property name = "supportedMethods">
+			<set>
+				<value>POST</value>
+				<value>GET</value>
+			</set>
+		  </property>
+		c)MultiActionController(class)
+			可以在同一个类中实现多个方法,通过配置methodNameResolver实现，有两种实现方式。
+			<bean id = "userController" class = "xxx.xxx.xxx.UserController">
+				<property name = "methodNameResolver">
+					<!--通过表单参数提交方法名  ?action=xxx  -->
+					<bean class = "org.springframework.web.serlvet.mvc.multication.ParameterMethodNameResolver"/>
+					<!--
+					<bean class = "org.springframework.web.servlet.mvc.multication.PropetiesMethodNameResolver">
+						<props>
+							<prop key = "/userinsert">insert</props>
+							<prop key = "/userdelete">delete</props>
+						</props>
+					</bean>
+					-->
+				</property>
+			</bean>
+				
+模型和视图
+	模型：数据模型
+	视图：
+		a)InternalResourceViewResolver:内部资源视图解析器
+			用于在当前web应用的内部查找资源
+			查找资源时，遵循查找原则
+			视图前缀+视图名称+视图后缀
+			
+		b)BeanNameViewResolver:对象名称视图解析器
+			将视图名称作为spring bean对象的名称进行解析
+			
+			<bean id = "hello" class = "org.springframework.web.servlet.view.JstlView">
+				<property name = "url" value = "/WEB-INF/jsp/test.jsp"/>
+			</bean>
+	
+	转发和重定向：
+			转发：
+				浏览器发送一次请求，由服务器进行内部资源的跳转，所以地址栏不会发生变化。
+			重定向
+				浏览器发送两次请求，可以跨越服务器。
+				
+注解
+	配置文件中的配置内容：
+		拦截器
+		处理映射器
+		处理适配器
+		视图解析器
+		视图
+		处理器
+		方法名称解析器
+		
+	使用注解，配置文件中只保留视图解析器
+	
+	<!--启用注解功能-->
+	<context:annotation-config/>
+	<!--扫描注解类-->
+	<context:componet-scan base-package="xxx.xxx.*"/>
+	 
+	使用注解：
+		a)在类前声明
+			@Controller：声明当前类为控制器
+			@RequestMapping:声明命名空间，访问时必须增加。
+		b)在方法前声明
+			@RequestMapping("请求路径",method={RequestMethod.POST}):将请求路径和当前方法进行映射。方法的返回值就是视图的名称。
+			@RequestMapping(value="/select",params={"usercode"}) params属性表示请求对象中必须包含指定参数，否则无法访问
+			@RequestMapping(value="/select",params={"!usercode"}) params属性表示请求对象中不需要包含指定参数，否则无法访问
+		    @RequestMapping(value="/select",params={"usercode=zhangsan"}) params属性表示请求对象是否满足要求，否则无法访问
+			
+			通过方法参数封装表单数据，封装表单数据的原则是表单数据名称和方法参数匹配
+			@RequestMapping(value="/select3")
+			public String select3(String usercode){
+				return usercode;
+			}
+			
+			如果方法参数名称和表单数据名称不匹配，依然想要封装成功，可以增加在方法参数前注解
+			@RequestMapping(value = "/select3")
+			public Strng select3(@RequestParam("usercode")String code){
+				return code;
+			}
+			
+			通过方法参数封装表单数据，将表单数据封装到数据模型中
+			@RequestMapping(value = "/select5")
+			public String select5(User user){
+				return user.getUsercode() + "-" user.getUsername();
+			}
+			
+			无论数据是模型和普通类型，都会进行封装
+			@RequestMapping(value = "/select5")
+			public String select5(User user，String usercode){
+				return user.getUsercode() + "-" user.getUsername();
+			}
+			
+			获取请求对象的ip地址
+			@RequestMapping(value="/select")
+			public string select(HttpServletRequest req){
+				return req.getRemoteAddr();
+			}
+			 
+			获取Response
+			如果响应中包含输出的内容，可以没有返回值
+			@RequestMapping(value = "/select") 
+			public void select(HttpServletResponse resp) throws Exception{
+				resp.getWriter().print("xxxxx");
+			}
+			
+			方法返回视图类型
+			@RequestMapping(value="/select")
+			public View select() throws Exception{
+				RedirectView view = new RedirectView();
+				view.setUrl("xxx");
+				return view;
+			}
+			
+			方法返回自定义对象
+				@ResponseBody
+				@RequestMapping(value="/select")
+				public Object select() throws Exception{
+					User user = new User();
+					user.setUsercode("xxx");
+					user.setUsername("xxxx");
+					return user;
+				}
+				a)让方法返回JSON字符串，必须增加特殊的注解@ResponseBody
+				b)需要引入jackson组件的jar包
+					jackson-core-asl-xxx.jar
+					jackson-mapper-asl-xxx.jar
+				c)修改配置文件，让响应体的内容为JSON字符串
+					<bean class = "org.springframework.web.servlet.mvc.annotation.AnnotationMethodHandlerAdater">
+						<property name = "messageConverters">
+							<list>
+								<bean class="org.springframework.http.converter.json.MappingJacksonHttpMessageConverter">
+									<property name = "supportedMediaTypes">
+										<list>
+											<value>application/json;charset=UTF-8</value>
+										</list>
+									</property>
+								</bean>
+							</list>
+						</property>
+					</bean>
+					
+			将路径参数和方法参数进行绑定
+			@RequestMapping(value = "/select/{usercode}/{userpswd}")
+			public String select(@PathVariable("usercode")String usercode,@PathVariable("userpswd")) String userpswd{
+				return usercode +　"-" + userpswd;
+			}
+			
+			框架使用注解后，方法参数会默认放置在请求范围内，所以如果想要扩大数据存储范围，不要和方法参数重名。
+			譬如：
+				@RequestMapping("/login")
+				public String login(User user) //这儿的方法参数user会默认的放入Request中
+				
+			因为springmvc框架就是spring框架的一个组成部分，所以没有必要两次扫面注解类。只需要一次扫描就够了。
+			但是扫描的时候，应该同时将所有的spring以及springMVC的配置文件全部解析，所以需要改善web.xml文件
+			
+			<servlet>
+				<servlet-name>springmvc</servlet-name>
+				<servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+				<init-param>
+					<param-name>contextConfigLocation</param-name>
+					<param-value>classpath:spring/applicationContext*.xml</param-value>
+				</init-param>
+				<load-on-startup>1</load-on-startup>
+			</servlet>
+			<servlet-mapping>
+				<servlet-name>springmvc</servlet-name>
+				<url-pattern>*.do</url-pattern>
+			</servlet-mapping>
+			
+			
+	
+	
+				
+				
+				
+				
+		
+		
+		
+
+			
+			
+		
+	
+		

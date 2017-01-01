@@ -1,0 +1,323 @@
+Servlet的生命周期
+	
+	生命周期：
+		生命周期表示一个对象从创建到销毁经历的过程。
+		
+	Servlet的生命周期由web容器管理
+	
+	默认情况下，Servlet对象在web服务器启动阶段不会实例化
+	
+	描述servlet对象生命周期：
+		1）请求路径
+		2）web容器截取路径
+		3）在路径下寻找servlet
+		4）容没有找到servlet对象
+			4.1）通过web.xml获得类型名
+			4.2）例化
+			4.3）调用init方法
+			4.4）调用service方法
+		5）若找到servlet对象
+			5.1）调用service方法
+		6）web容器关闭/webapp重新部署/该servelt对象长时间没被访问，web容器会销毁该servlet对象，销毁前调用destroy方法。
+		
+	servlet类的构造方法，servlet对象的init，destroy方法只执行一次。
+	
+	servlet对象在单实例多线程条件下执行。Servlet对象中若有实例变量，该变量会被修改，一定会存在线程安全问题。
+	
+	大多数web容器在Servlet对象实例化之后将该对象存储到Map<url-pattern,Servlet>中
+	
+	服务器启动后在解析web.xml时会将url-pattern和对应的servlet类名存储到Map<String,String>中
+	
+ServletConfig接口
+
+	Tomcat服务器是一个实现了Servlet规范和JSP规范的容器。
+	
+	ServletConfig对象是一个Servlet对象的配置信息对象，ServletConfig对象中封装了一个Servlet对象的配置信息。 配置信息在web.xml中。
+	
+	一个servlet对象对应一个ServletConfig对象
+	
+	ServletConfig接口中的常用方法：
+		- String getInitParameter（String name） 根据name获取value
+		- Enumeration getInitParameterNames()    获取所有初始化参数的name
+		- String getServletName()  获取name = servlet-name
+		- ServletContext getServletContext  获取ServletContext（Servlet上下文）
+		
+ServletContext
+	
+	所有的Servlet对象共享一个ServletContex对象
+	一个webapp只有一个ServletContext对象
+	一个webapp只有一个web.xml文件
+	web.xml在服务器启动阶段被解析
+	ServletContext对象在服务器启动阶段被实例化
+	ServletContext在对象在服务器关闭时被销毁
+	ServletContext对应的是web.xml文件，是web.xml的代表
+	所有的用户若想共享同一个数据，可以将这个数据放到ServletContext对象中
+	一般放到ServletContext对象中的数据是不建议涉及到修改操作的，因为ServletContext是多线程共享的一个对象，修改时会存在线程完全问题
+	
+	常用方法：
+		void setAttribute(String name,Object object): 添加数据
+		Object getAttrubute(String name):获取数据
+		void removeAttribute(String name):移除数据
+		
+		String getInitParameter(String name)
+		Enumeration getInitParameterNames()
+		
+		String getRealPath(String path)
+
+HTTP状态码：
+	
+	404 -Not Found【资源未找到】
+	500 -Server Inner error【一般是java程序异常】
+	200 -OK
+	
+HTTP协议：
+	
+	HTTP协议包括：
+		请求协议：从浏览器发送到服务器时采用的数据传送格式；
+		响应协议：从服务器发送到浏览器时采用的数据传送格式。
+	
+	请求协议：
+		包含：
+			请求行
+			消息报头
+			空白行
+			请求体
+		
+		请求行包括：请求方式  URI  协议版本号
+		空白行：    专门用来分离消息报头和请求体
+			
+	响应协议：
+		包含：
+			状态行
+			响应报头
+			空白行
+			响应体
+			
+		状态行：协议版本号 状态码 转状态描述信息
+		空白行：分离响应报头和响应体
+		
+GET和POST
+
+	只有当使用表单form，并且将form标签的method属性设置为method=‘post’，才是POST请求，其余都是GET方式
+			
+	GET和POST的区别：
+	
+		- GET请求在请求行上提交数据，格式：uri？name=value&name=value&name=value...
+		这种提交方式最终提交的数据会显示到浏览器地址栏		
+		-POST在请求体中提交数据，相对安全，提交格式： name=value&name=value...	
+		-POST请求在请求体中提交数据，所以POST请求提交的数据没有长度的限制【POST可以提交大数据】	
+		-GET请求在请求行上提交数据，所以长度有限制		
+		-GET请求只能提交字符串，POST请求可以提交任何类型的数据，包括视频...,所以文件上传必须使用POST
+		-GET请求最终的结果，会被浏览器缓存收纳。而POST请求最终的结果不会被浏览器缓存。
+		
+	GET和POST的选择：
+	
+		敏感数据，非字符串数据的传送，大量数据的传送，这个请求是为了修改服务器端资源，使用POST
+		
+		GET请求多数情况下是从服务器中读取资源，这个读取的资源在短时间之内是不会发生变化的，所以GET请求最终的结果被浏览器缓存起来了。
+		
+		POST请求是为了修改服务器端的资源，而每次修改结果都是不同的，最终的结果没必要缓存
+		
+HttpServletRequest接口
+
+	HttpServletRequest接口中封装的信息：
+		封装了HTTP请求协议的全部内容：
+			- 请求方式
+			- URI
+			- 协议版本号
+			- 表单提交的数据
+			...
+	
+	HttpServletRequest接口的常用方法
+	
+		- 表单提交的数据，会自动被封装到request对象中，request对象中有Map集合存储数据，key是name，value是一个字符串类型的一维数组
+		
+			- String getParameter(String name)				通过key获取value数组中的首元素
+			- Map getParameterMap（）   					获取这个Map集合
+			- Enumeration getParameterNames（）             获取所有的key
+			- String[] getParameterValues(String name)      通过key获取value数组
+			
+			- void setAttribute(String name , Object o)     向request范围存储数据
+			- Object getAttribute(String name)	            从request范围读取数据
+			- void removeAttribute(String name)             从request范围删除数据
+			
+	HttpRequest的范围
+		
+		一次请求对应一个request对象
+		请求范围极小，request只能完成在同一个请求中传递数据
+		
+	转发技术（执行完AServlet之后，跳转到BServlet，将AServlet和BServlet执行放到同一个请求中）
+	
+		1、获取请求转发器对象
+		2、调用转发器对象的forward方法	
+		eg：request.getRequestDispatcher("/b").forward(request,response);
+		
+	ServletContext 应用范围：可以跨用户传递数据
+	ServletRequest 应用范围：只能在同一个请求中传递数据，但是可以跨多个同一个请求的Servlet
+		
+Servlet的线程安全问题
+
+	1、Servlet是在单实例多线程的环境下运行的
+	
+	2、什么时候存在线程安全问题：
+		- 多线程并发
+		- 有共享的数据
+		- 共享数据有修改操作
+		
+	3、在JVM中，那些数据可能会存在线程安全问题
+		- 局部变量内存空间不共享，一个线程一个栈，局部变量在栈中存储，局部变量不存在线程安全问题
+		- 所有线程共享一个堆
+			堆内存中存储new出来的对象，对象内部有实例变量，所以“实例变量”的内存多线程是共享的
+			实例变量多线程共同访问，并且涉及到修改操作的时候就会存在线程安全问题。
+		- 所有线程共享一个方法区
+			方法区中有静态变量，静态变量的内存也是共享的，若涉及到修改操作，静态变量也存在线程安全问题。
+		
+	4、数据库中可能存在线程安全问题，如多个线程共享同一张表，并同时修改表中的记录
+		解决方案：
+			1、java程序中使用synchronized关键字
+			2、悲观锁
+			3、事务隔离级别，如串行化
+			4、乐观锁...
+	
+	5、怎么解决线程安全问题
+		5.1 不使用实例变量，尽量使用局部变量
+		5.2 若必须使用实例变量，可以考虑将该对象变成多例对象，一个线程一个java对象，实例变量的内存也不会共享。
+		5.3 若必须使用单例，只能使用synchronized关键字
+		
+	6、 Servlet解决线程安全问题
+		synchronized和局部变量
+	
+关于web系统中的资源跳转：
+	
+	两种方式：
+		1、转发
+		2、重定向
+		
+	转发和重定向代码怎么完成
+		-转发
+			request.getRequestDispatcher("/b").forward(request,response);
+		-重定向
+			response.sendRedirect(request.getContextPath() + "/b");
+
+		转发是request对象触发的，重定向是response对象触发的
+		转发是一次请求，浏览器地址栏不会变化；重定向是两次请求，浏览器地址栏会发生变化
+		重定向路径需要加webapp的根路径
+		转发是在本项目内部完成资源跳转，重定向可以完成跨app跳转
+		
+	重定向的原理：
+		response.sendRedirect("/jd/login");
+		程序执行到以上代码，将请求路径/jd/login
+		浏览器地址栏上最终显示的地址是/jd/login
+		地址栏最终显示/jd/login
+		
+Cookie
+
+	cookie是什么：
+		- cookie可以保存会话状态，但是这个会话状态是保留在客户端上。
+		- 只要cookie清楚，或者cookie失效，这个会话状态就没有了
+		- cookie是保存在浏览器客户端上的
+		- cookie可以保存在浏览器缓存中，浏览器关闭cookie消失
+		- cookie也可以保存在客户端的硬盘文件中，浏览器关闭cookie还在，除非cookie失效
+		
+	在java中Cookie被当做类处理，使用new来创建cookie对象，而且cookie由两部分组成，分别是cookie的name和value，name和value都是字符串类型
+	
+	在java中创建cookie
+		Cookie cookie = new Cookie（String cookieName， String cookieValue）
+		
+	将cookie发送给浏览器
+		response.addCookie(cookie);
+		
+	服务器可以一次向浏览器发送多个cookie
+	
+	默认情况下，服务器发送cookie给浏览器之后，浏览器将cookie保存在缓存中，只要不关闭浏览器，cookie永远存在。浏览器被关闭后，缓存的cookie 被清除
+	
+	在浏览器客户端无论是硬盘文件中还是缓存中保存的cookie，什么时候会再次发送给服务器？
+		- 浏览器是否发送cookie给服务器和请求路径紧密关联，不同的路径发送不同的cookie
+		
+	默认情况下cookie会和哪些路径绑定在一起？
+		假设在/webapp01/test/sendCookie下 请求服务器，生成cookie，并发送给浏览器，这个浏览器中的cookie会和“test/”路径绑定在一起
+		也就是说，只要发送“test/”请求，cookie就一定会发送给服务器
+		
+	路径可以指定：
+		假设执行cookie.setPath("webapp01/king");cookie将和"webapp01/king"这个路径绑定在一起，只有发送"webapp01/king"请求路径，浏览器才会提交cookie给服务器
+		
+	默认情况下，没有设置cookie的有效时长，cookie被默认保存在浏览器缓存中，只要浏览器不关闭，cookie存在，我们可以通过设置cookie的有效时长，保证cookie保存在
+	硬盘文件中，但这个有效时长必须大于0。有效时长过去后，硬盘中的cookie失效。
+	cookie.setMaxAge（int second）设置cookie的有效时长
+	
+	
+	服务器接收cookie：
+		Cookie[] cookies = request.getCookies();
+		cookie.getName();
+		cookie.getValue();
+		
+	浏览器可以禁用cookie，表示服务器发过来的cookie浏览器不接收
+	
+session
+	
+	HttpSession对象是一个会话级别的对象，一次会话对应一个HttpSession对象
+	
+	什么是一次会话：
+		用户打开浏览器，在浏览器上发送多次请求，直到最终关闭浏览器表示一次完整的会话。
+		
+	会话进行过程中，web服务器一直为当前这个用户维护着一个会话对象HttpSession
+	
+	在web容器中，维护着大量的HttpSession对象，换句话说，web容器维护着个一个“Session列表”
+	
+	session的实现原理：
+		- 打开浏览器，在浏览器上发送首次请求
+		- 服务器会创建一个HttpSession对象，该对象代表一次会话
+		- 同时生成HttpSession对象对应的Cookie对象，并且Cookie对象的name是JESSIONID，cookie的value是32位长度的字符串
+		- 服务器将cookie 的value和HttpSession对象绑定到session列表中
+		- 服务器将cookie发送到浏览器客户端，并且浏览器将cookie保存到缓存中
+		- 只要浏览器不关闭，cookie不会消失
+		- 当再次发送请求时，浏览器会自动提交缓存当中的cookie给服务器
+		- 服务器收到cookie，验证该cookie的name确实是：JESSIONID，然后获取该cooike的value
+		- 通过cookie的value去session列表中检索对应的HttpSession对象。
+		
+	cookie中保存了session的id。
+		
+	浏览器禁用cookie，则浏览器缓存中不再有cookie，导致同一会话中无法获得对应的会话对象，禁用cookie后每一次获得的会话对象都是新的
+	浏览器禁用cookie后，若还想拿到对应的session对象，必须使用url重写机制:
+	http://localhost/webapp01/accessMySession?jessionid=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+	
+	浏览器关闭后，服务器不会销毁session对象。因为B/S架构基于HTTP协议，而HTTP协议是一种无连接、无状态的协议
+	
+	什么是无连接、无状态？
+		请求的瞬间浏览器和服务器之间的通道是打开的，请求响应结束后，通道关闭
+		这样做的目的是降低服务器的压力
+		
+	session对象在什么时候被销毁？
+		web系统中引入了session超时的概念。当很长一段时间没有用户访问该session对象，此时session对象超时，web服务器回收该session对象
+		可配置：web.xml文件中，默认是30min
+		<session-config>
+			<session-time-out>120</session-time-out>
+		</session-config>
+	
+	javax.servlet.http,HttpSession接口中的常用方法：
+		- void setAttribute(String name ,Object value)
+		- Object getAttribute(String name)
+		- void removeAttribute(String name)
+		- void invalidate()
+		
+	ServletContext 、 HttpSession 、 HttpSerlvetRequest接口的区别：
+		1、以上都是范围对象
+			ServletContext application ； 应用范围：
+			HttpSession session； 会话范围
+			HttpServletRequest request ； 请求范围
+		
+		2、application完成跨会话共享数据
+		   session完成跨请求共享数据，但是这些请求必须在一个会话中
+		   request完成跨Servlet共享数据，但这些Servlet必须在同一个请求中
+		
+		
+		
+	
+		
+	
+		
+
+		
+	
+	
+	

@@ -1,0 +1,869 @@
+Spring的主要作用：解耦。
+		解耦方式：IoC AOP 
+		IoC解决主业务逻辑（专业业务，复用性低）
+		AOP解决系统级业务（日志、安全等，复用性高）
+		
+IOC(Inverse of Control):
+	概念：
+		由程序代码直接操控的对象调用权交给容器，通过容器来实现对象的装备和管理。
+	实现方式;
+		依赖查找：容器提供回调接口和上下文环境给组件，程序代码需要提供具体的查找方式。
+		依赖注入：程序代码不做定位查询，这些工作由容器自行完成。
+	依赖注入是目前最优秀的解耦方式。
+	
+结构：
+							core container
+								 |
+		|---------------|-----------------|---------------|
+	  Beans           Core              Context         SpEL
+	  
+基本jar包：
+	spring-beans-xxx.Release.jar
+	spring-context-xxx.Release.jar
+	spring-core-xxx.Release.jar
+	spring-expression-xxx.Release.jar
+	com.spirngsource.org.apache.commons.logging-xxx.jar
+	com.spirngsource.org.apache.log4j-xxx.jar
+	
+基本配置文件
+	<!--注册Bean-->
+	<bean id = "someService" class="xxx.xxxx.xxx.SomeServiceImpl"/>
+
+基本代码：
+	//利用ApplicationContext
+	ApplicationContext ac = new ClassPathXmlApplicationContext("applicationContext.xml");
+	ISomeService someService = (ISomeService)ac.getBean("someService");
+	someService.doSome();
+	//利用BeanFactory
+	BeanFactory bf = new XmlBeanFactory(new ClassPathResource("applicationContext.xml"));
+	ISomeService someService = (ISomeService)ac.getBean("someService");
+	someService.doSome();
+	
+	//区别：
+	//ApplicationContext容器：在初始化容器时，就将容器中的所有对象进行了创建
+	//BeanFactory容器：使用时才创建
+	
+默认装配方式：
+	Spring默认使用无参数构造器，创建空值的实例对象。
+	
+动态工厂装配方式：
+	<bean id = "someFactory" class="xxx.xxxx.xxx.SomeFactory"/>
+	<!--表明someService对象是由someFactory这个工厂Bean的getSomeService()方法创建的-->
+	<bean id = "someService" factory-bean="someFactory" factory-method="getSomeService"/> 
+	
+静态工厂装配方式：
+	<!--表明someService对象是由someFactory这个静态工厂Bean的getSomeService()方法创建的-->
+	<bean id = "someService" class="xxx.xxx.xxx.SomeFactory" factory-method="getSomeService"/> 
+	
+容器中bean的作用域
+	prototype（原型模式） 每次getBean方法获取的都是一个新的实例
+	singleton（单例模式） 容器初始化时就创建，整个Spring中，使用singleton定义的Bean将是单例的，默认模式
+	
+BeanPostProcessor： bean后处理器接口
+	//在当前bean的所有属性都被初始化之前调用该方法
+	//bean：当前正在初始化的bean对象
+	//beanName:当前正在初始化的bean的id
+		public Object postProcessBeforeInitialization(Object bean,String beanName){return bean；}
+	//在当前bean的所有属性都被初始化之后调用该方法
+		public Object postProcessAfterInitialization(final Object bean,String beanName){return bean；}
+
+bean后处理器的一个用例：
+	针对特定的bean对象让其方法返回的String都是大写的
+	public Object postProcessAfterInitialization(final Object bean,String beanName)	throws BeansException{
+		if("someService1".equals(beanName)){
+			Object serviceProxy = Proxy.newProxyInstance(bean.getClass().getClassLoader(),bean.getClass().getInterfaces(),new InvocationHandler(){
+										public Object invoke(Object proxy,Method method , Object[] args) throws Throwable{
+											Object result = method.invoke(bean,args);
+											return ((String)result).toUpperCase();
+										}
+									})
+			return serviceProxy;
+		}
+		return bean;
+	}
+
+
+定制bean的生命始末：
+	<bean id = "someService" class="xxx.xxxx.xxx.SomeServiceImpl"/ init-method="initPost" destroy-method = "preDestroy"/>
+	若要看到销毁方法的执行，需要两个条件：
+		1.Bean需要时单例的
+		2.手工将容器关闭
+		((ClassPathXmlApplicationContext)ac).close();
+		
+bean的生命周期
+
+基于xml的DI
+	设置注入：
+		<bean id = "mySchool" class="xxx.xxx.xxx.School">
+			<property name = "name" value = "MIT">
+		</bean>
+		<bean id = "student" class = "xxx.xxx.xxx.Student">
+			<property name = "name" value ="Jack"/> 
+			<property name = "school" ref ="mySchool"/> 
+		</bean>
+		
+	构造注入：
+		构造注入不执行无参构造器
+		<constructor-arg name = "name" , value = "Jack">
+		<constructor-arg name = "school" , ref = "mySchool">
+
+	p命名空间设置注入：
+		xmlns:p="http://www.springframework.org/schema/p"
+		<bean name="classic" class="com.example.ExampleBean">
+			<property name="email" value="foo@bar.com"/>
+		</bean>
+		<bean name="p-namespace" class="com.example.ExampleBean"
+			p:email="foo@bar.com"/>
+		
+	c命名空间构造注入：
+		xmlns:c="http://www.springframework.org/schema/c"
+		
+		<!-- traditional declaration -->
+		<bean id="foo" class="x.y.Foo">
+			<constructor-arg ref="bar"/>
+			<constructor-arg ref="baz"/>
+			<constructor-arg value="foo@bar.com"/>
+		</bean>
+		<!-- c-namespace declaration -->
+		<bean id="foo" class="x.y.Foo" c:bar-ref="bar" c:baz-ref="baz" c:email="foo@bar.com"/>
+		
+	集合属性注入：
+		<propert name = "names">
+			<array>
+				<value>Jack</value>
+				<value>Lucy</value>
+			</array>
+		</property>
+		
+		<propert name = "schools">
+			<list>
+				<ref bean="mySchool1"/>
+				<ref bean="mySchool2"/>
+			</list>
+		</property>
+		
+		<propert name = "schools">
+			<set>
+				<ref bean="mySchool1"/>
+				<ref bean="mySchool2"/>
+			</set>
+		</property>
+		
+		<property name = "myMap">
+			<map>
+				<entry key="QQ" value = "1234567"/>
+				<entry key="Email" value="xxxxxxxx@qq.com"/>
+			</map>
+		</property>
+		
+		<property name = "myMap">
+			<props>
+				<prop key="addr">xxx</prop>
+				<prop key="mobile">xxxx111</prop>
+			</props>
+		</property>
+		
+	byName方式自动注入
+		<bean id = "mySchool" class="xxx.xxx.xxx.School">
+			<property name = "name" value = "MIT">
+		</bean>	
+		
+		<!--byname方式域属性自动注入，要求自动注入的Bean的id名称要与被注入的属性名相同-->
+		<bean id = "student" class = "xxx.xxx.xxx.Student" autowire = “byName”>
+			<property name = "name" value ="Jack"/>  
+		</bean>
+		
+	byType方式自动注入
+		<bean id = "mySchool" class="xxx.xxx.xxx.School">
+			<property name = "name" value = "MIT">
+		</bean>	
+		<!--byType方式域属性自动注入，要求容器中与被注入属性类型具有is-a关系的Bean，只能有一个-->
+		<bean id = "student" class = "xxx.xxx.xxx.Student" autowire = "byType">
+			<property name = "name" value ="Jack"/>  
+		</bean>
+		
+	内部Bean：
+		School类不能通过spring获取
+		<bean id = "student" class = "xxx.xxx.xxx.Student" autowire = "byType">
+			<property name = "name" value ="Jack"/>  
+			<property name = "school">
+				<bean id = "mySchool" class="xxx.xxx.xxx.School">
+					<property name = "name" value = "MIT">
+				</bean>		
+			</property>
+		</bean>
+		
+	同类抽象bean
+		把bean相同的属性抽取出来作为一个抽象的父类，并且该父类不能被获取。
+		<bean id = "basetudent" class = "xxx.xxx.xxx.Student" abstruct = "true">
+			<property name = "school" value = "MIT"/>
+			<property name = "department" value = "communication"/>
+		</bean>
+		<bean id = "student1" parent="baseStudent">
+			<property name = "name" value = "Jack"/>
+			<property name = "age" value = 23/>
+		</bean>
+		<bean id = "student2" parent="baseStudent">
+			<property name = "name" value = "Tom"/>
+			<property name = "age" value = 24/>
+		</bean>
+		<bean id = "student3" parent="baseStudent">
+			<property name = "name" value = "Lucy"/>
+			<property name = "age" value = 23/>
+		</bean>
+		
+	异类抽象bean
+		<bean id = "person" abstruct = "true">
+			<property name = "school" value = "MIT"/>
+			<property name = "department" value = "communication"/>
+		</bean>
+		<bean id = "student" class = "xxx.xxx.xxx.Student" parent="person">
+			<property name = "name" value = "Jack"/>
+			<property name = "age" value = 23/>
+		</bean>
+		<bean id = "student" class = "xxx.xxx.xxx.Teacher" parent="person">
+			<property name = "name" value = "Tom"/>
+			<property name = "age" value = 24/>
+		</bean>
+
+基于注解的DI
+	环境搭建
+		导入AOP的jar包：spring-aop-xxx.REALEASE.jar
+		更换配置文件头，添加相应的约束：
+			<?xml version="1.0" encoding="UTF-8"?>
+			<beans xmlns="http://www.springframework.org/schema/beans"
+				xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+				xmlns:context="http://www.springframework.org/schema/context" xsi:schemaLocation="
+				http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/springbeans.
+				xsd
+				http://www.springframework.org/schema/context http://www.springframework.org/schema/context/
+				spring-context.xsd"> <!-- bean definitions here -->
+			</beans>
+		添加上下文扫描环境：
+			<!--只扫描子包，不扫描当前包-->
+			<context:component-scan base-package="com.xxx.xxx.*"/>
+			<!--先扫描当前包，没发现再扫描子包-->
+			<context:component-scan base-package="com.xxx.xxx"/>
+	基本：注解不使用set方法，可以不写。
+		//@Repository:注解在Dao接口的实现类上，表示当前Dao类为组件
+		//@Service：注解在Service接口的实现类上，表示当前Service类为组件
+		//@Controller:注解在Controller类上，表示当前Controller类为组件(SpringMVC)
+		@Component("myStudent")
+		@Scope("protoType")
+		public class Student{
+			@Value("Jack")
+			private String name;
+			@Value("15")//可以写在相应的set方法前
+			private int age;
+			@Resource  //byType方式自动注入
+			//@Resource(name="mySchool") //byName方式自动注入
+			//@Autowired //byType
+			//@Autowired 
+			//@Qualifier("mySchool") //byName方式自动注入
+			private School school；
+			
+			//get set方法
+			........
+			........
+			........
+		}
+		
+	定制bean的生命始末：
+		@PostConstruct
+		//初始化完毕之后
+		public void postInit(){
+		}
+		
+		@PreDestroy
+		//销毁之前
+		public void preDestroy{
+		}
+		
+	JavaConfig注解：
+		@Configuration //表明当前POJO类将会被当做配置文件来作用，即Spring容器
+		public class MyJavaConfig{
+			@Bean(name = "mySchool")
+			public School mySchoolCreator(){
+				return new School("MIT");
+			}
+			
+			@Bean(name = "school")                 //byName方式需要定义的该Bean的name值与被注入的属性名相同
+			public School mySchoolCreator(){    
+				return new School("Std");
+			}
+			
+			//@Bean(name="myStudent",autowire=Autowire.BY_TYPE) //byType方式自动注入
+			@Bean(name="myStudent",autowire=Autowire.BY_NAME)   //byName方式自动注入
+			public Student myStudentCreator(){
+				return new Student("Jack",20);
+			}
+		}
+		
+	配置文件的优先级高于注解!
+	
+AOP术语：
+	切面：交叉业务逻辑
+	织入：将切面代码插入到目标对象的过程。
+	连接点：可以被切面织入的方法。业务接口中的方法均为连接点。
+	切入点：切入点指切面具体织入的方法。
+	目标对象：要被增强的对象。
+	通知：切面的一种实现，定义了增强代码切入到目标代码的时间点。
+	顾问：将通知包装为更复杂切面的装配器。
+	
+AOP环境搭建：
+	导入jar包
+
+通知：
+	前置通知：
+		定义前置通知，需要实现MethodBeforeAdvice接口。该接口中有一个方法before(),会在目标方法执行之前执行。
+		
+		//method:目标方法
+		//args：参数列表
+		//target：目标对象
+		public void before(Method method , Object[] args, Object target) throws Throwable{}
+		
+		<!--目标对象-->
+		<bean id="someSerivce" class="xxx.xxx.xxx.SomeServiceImpl"/>
+		<!--切面通知-->
+		<bean id = "beforeAdvice" class = "xxx.xxx.xxx.MyMethodBeforeAdivice"/>
+		
+		<!--代理对象的生成：这里的ProxyFactoryBean不是代理类，而是代理对象生成器-->
+		<bean id = "serviceProxy" class="org.springframework.aop.framework.ProxyFactoryBean">
+			<property name = "target" ref = "someService"/>
+			<!--<property name = "targetName" ref = "someService"/>-->
+			
+			<!--可以不写接口，默认会自动检测到目标类所实现的所有接口-->
+			<!--<propert name = "interfaces" value = "xxx.xxx.xxx.ISomeService">-->
+			
+			<property name = "interceptorNames" value = "beforeAdvice"/>
+		</bean>
+		
+	后置通知：
+		需要实现AfterReturningAdvice接口，该接口中有一个方法afterReturning(),会在目标方法执行之后执行
+		
+		//returnValue: 目标方法返回值
+		public void before(Object returnValue, Method method , Object[] args, Object target) throws Throwable{}
+		
+		<!--目标对象-->
+		<bean id="someSerivce" class="xxx.xxx.xxx.SomeServiceImpl"/>
+		<!--切面通知-->
+		<bean id = "afterAdvice" class = "xxx.xxx.xxx.MyAfterReturningAdivice"/>
+		
+		<!--代理对象的生成：这里的ProxyFactoryBean不是代理类，而是代理对象生成器-->
+		<bean id = "serviceProxy" class="org.springframework.aop.framework.ProxyFactoryBean">
+			<property name = "target" ref = "someService"/>
+			<!--<property name = "targetName" ref = "someService"/>-->
+			
+			<!--可以不写接口，默认会自动检测到目标类所实现的所有接口-->
+			<!--<propert name = "interfaces" value = "xxx.xxx.xxx.ISomeService">-->
+			
+			<property name = "interceptorNames" value = "afterAdvice"/>
+		</bean>
+		
+	环绕通知：
+		实现MethodInterceptor接口的invoke方法
+		public Object invoke(MethodInvocation invocation) throws Throwable{
+			//目标方法执行前
+			//xxxxxxxxxxxxxxxxxxx
+			
+			//调用目标方法
+			//Object result = invocation.proceed();
+			
+			//目标方法执行后
+			//xxxxxxxxxxxxxxxxxxx
+			
+			//对目标方法返回结果的增强
+			//xxxxxxxxxxxxxxxxxxxxx
+			
+			return result;
+		}
+	
+	异常通知：
+		定义异常通知，需要实现ThrowsAdvice接口。该接口的主要作用是，在目标方法抛出异常后，根据异常的不同做出相应处理。
+		
+		异常回顾：
+			          |--Error
+			Throwable-                 |--运行时异常（RuntimeException）
+			          |--Exception-----
+		                               |--受查异常（在编写时必须捕获和抛出的异常）
+
+顾问：
+	名称匹配方法：
+		<!--目标对象-->
+		<bean id="someSerivce" class="xxx.xxx.xxx.SomeServiceImpl"/>
+		<!--切面通知-->
+		<bean id = "beforeAdvice" class = "xxx.xxx.xxx.MyMethodBeforeAdivice"/>
+		<!--切面顾问-->
+		<bean id = "beforeAdvisor" class = "org,springframework.aop.support.NameMatchMethodPointcutAdivisor">
+			<property name = "advice" ref="beforeAdvice"/>
+			<!--名称匹配方法-->
+			<property name = "mappedNames" value = "do*"/> 
+		</bean>
+		
+		<!--代理对象的生成：这里的ProxyFactoryBean不是代理类，而是代理对象生成器-->
+		<bean id = "serviceProxy" class="org.springframework.aop.framework.ProxyFactoryBean">
+			<property name = "target" ref = "someService"/>
+			<property name = "interceptorNames" value = "beforeAdvice"/>
+		</bean> 
+	正则表达式
+		<!--目标对象-->
+		<bean id="someSerivce" class="xxx.xxx.xxx.SomeServiceImpl"/>
+		<!--切面通知-->
+		<bean id = "beforeAdvice" class = "xxx.xxx.xxx.MyMethodBeforeAdivice"/>
+		<!--切面顾问-->
+		<bean id = "beforeAdvisor" class = "org,springframework.aop.support.NameMatchMethodPointcutAdivisor">
+			<property name = "advice" ref="beforeAdvice"/>
+			<!--正则表达式匹配方法-->
+			<!--正则表达式匹配的对象为全限定方法名，而不仅仅是简单方法名-->
+			<property name = "patterns" value = ".*S.*"/> 
+		</bean>
+		
+		<!--代理对象的生成：这里的ProxyFactoryBean不是代理类，而是代理对象生成器-->
+		<bean id = "serviceProxy" class="org.springframework.aop.framework.ProxyFactoryBean">
+			<property name = "target" ref = "someService"/>
+			<property name = "interceptorNames" value = "beforeAdvice"/>
+		</bean> 
+		
+	默认Advisor自动代理生成器：
+		<!--目标对象-->
+		<bean id="someSerivce" class="xxx.xxx.xxx.SomeServiceImpl"/>
+		<!--切面通知-->
+		<bean id = "beforeAdvice" class = "xxx.xxx.xxx.MyMethodBeforeAdivice"/>
+		<!--切面顾问-->
+		<bean id = "beforeAdvisor" class = "org,springframework.aop.support.NameMatchMethodPointcutAdivisor">
+			<property name = "advice" ref="beforeAdvice"/>
+			<!--名称匹配方法-->
+			<property name = "mappedNames" value = "do*"/> 
+		</bean>
+		
+		<!--代理对象的生成：这里的ProxyFactoryBean不是代理类，而是代理对象生成器-->
+		<bean class="org.springframework.aop.framework.autoproxy.DefaultAdvisorAutoProxyCreator"/>
+		
+	bean名称自动代理生成器
+		<!--目标对象-->
+		<bean id="someSerivce" class="xxx.xxx.xxx.SomeServiceImpl"/>
+		<!--切面通知-->
+		<bean id = "beforeAdvice" class = "xxx.xxx.xxx.MyMethodBeforeAdivice"/>
+		<!--切面顾问-->
+		<bean id = "beforeAdvisor" class = "org,springframework.aop.support.NameMatchMethodPointcutAdivisor">
+			<property name = "advice" ref="beforeAdvice"/>
+			<!--名称匹配方法-->
+			<property name = "mappedNames" value = "do*"/> 
+		</bean>
+		
+		<!--该自动代理生成器不尽可以指定目标对象，还可以指定切面,并且切面顾问通知都可以-->
+		<bean class="org.springframework.aop.framework.autoproxy.BeanNameAutoProxyCreator">
+			<property name = "beanNames" value = "someService">
+			<!--<property name = "interceptorNames" value = "beforeAdvisor">-->
+			<property name = "interceptorNames" value = "beforeAdvisor">
+		</bean>
+		
+	没有接口时自动使用CGLIB代理
+	
+AspectJ对AOP的实现
+	AspectJ是一个AOP框架
+	
+	环境搭建：
+		1）导入两个jar包（AspectJ包和spring对AspectJ的支持包）
+		2）引入AOP约束  
+		
+	切入点表达式：
+		execution([modifiers-pattern]          访问权限类型
+				   ret-type-pattern		       返回值类型
+				  [declaring-type-pattern]     全限定类名
+				   name-pattern(param-pattern) 方法名(参数名)
+				  [throws-pattern]             抛出异常类型
+					)
+	
+	注解形式：
+	
+		在xml中定义AspectJ自动代理
+		<aop:aspectj-autoproxy>
+		
+		@Aspect     //表示当前POJO类为切面
+		public class Aspect{
+			//定义前置通知方法
+			@Before("execution(* *..ISomeService.doSome(..))")
+			public void myBefore(JoinPoint jp){
+			
+			}
+			
+			//定义后置通知
+			@AfterReturning("execution(* *..ISomeService.doSome(..))")
+			public vod myAfterReturning(){
+			
+		    }
+			@AfterReturning(value = "execution(* *..ISomeService.doSome(..))",returning = "result")
+			public vod myAfter(Object result){
+			
+		    }
+			
+			//定义环绕通知
+			@Around("execution(* *..ISomeService.doThird(..))")
+			publc Object myAround(ProceedingJoinPoint pjp) throws Throwable{
+				//执行目标方法
+				Object result = pjp.proceed();
+				
+				return result;
+			}
+			
+			//定义异常通知方法
+			@AfterThrowing(value = "execution(* *..ISomeService.doSome(..))",throwing="ex")
+			public void myAfterThrowing(Exception ex){
+			
+			}
+			
+			//定义最终通知方法
+			@After("doSomePointcut()")
+			pulic void myAfter(){
+			
+			}
+			
+			//定义切入点
+			@PointCut("execution(* *..ISomeService.doSome(..))")
+			private void doSomePointcut(){
+			
+			}
+		}
+		
+	基于xml:
+		<aop:config>
+			<aop:pointcut expression = "execution(* *..service.*.doSome(..))" id="doSomePointcut">
+			<aop:pointcut expression = "execution(* *..service.*.doSome(..))" id="doSecondPointcut">
+			<aop:pointcut expression = "execution(* *..service.*.doSome(..))" id="doThirdPointcut">
+			<aop:aspect ref="myAspect">
+				<aop:before method="myBefore" pointcut-ref="doSomePointcut"/>
+				<aop:before method="myBefore(org.aspectj.lang.JoinPoint)" pointcut-ref="doSomePointcut"/>
+				<aop:after-returning method="myAfterReturning" pointcut-ref="doSomePointcut"/>
+				<aop:after-returning method="myAfterReturning(java.lang.Object)" pointcut-ref="doSomePointcut" returning="result"/>
+				<aop:around method="myAround" pointcut-ref="doSomePointcut"/>
+				<aop:after-throwing method="myAfterThrowing" pointcut-ref="doSomePointcut"/>
+				<aop:after method="myAfter" pointcut-ref="doSomePointcut"/>
+			</aop:aspect>
+	
+spring与JDBC模板
+	jar包：
+		spring-jdbc-xxx.RELEASE.jar
+		spring-tx-xxx.RELEASE.jar
+	配置文件：
+		<!--注册数据源：c3p0数据源-->
+		<bean id = "myDataSource class = "com.mchange.v2.c3p0.ComboPooledDataSource">
+			<property name = "driverClass" value = "${jdbc.driverClass}">
+			<property name = "jdbcUrl" value = "${jdbc.url}">
+			<property name = "user" value = "${jdbc.user}">
+			<property name = "password" value = "${jdbc.password}">
+		</bean>
+		<!--注册jdbc属性文件-->
+		<context:property-placeholder location = "classpath:jdbc.properties"/>
+		<!--注册Dao-->
+		<bean id = "studentDao" class = "xxx.xxx.xxx.StudentDaoImpl"/>
+			<prperty name = "dataSource" ref = "myDataSource">
+		</bean>
+		<!--注册Service-->
+		<bean id = "studentService" class = "xxx.xxx.xxx.StudentServiceImpl">
+			<property name = "dao" ref = "studentDao"/>
+		</bean>
+		
+	类与接口：
+		public interface IStudentService{}
+		public class StudentServiceImpl implements IStudentInterface{}
+		public interface IStudentDao{}
+		public class StudentDaoImpl extends JdbcDaoSupport implements IStudentDao{}
+		
+spring的事务管理
+
+	PlatforTransactionManager接口：
+		DataSourceTransactionManager： 使用JDBC或iBatis进行持久化数据
+		HibernateTransactionManager：使用Hibernate持久化数据
+	Spring的回滚方式：
+		发生受查异常时提交，发生运行时异常时回滚，对于受查异常，可手工设置
+	TransactionDefinition：事务定义接口：
+		定义事务隔离级别，事务传播行为，事务默认超时时限
+
+	<!--注册事务管理器-->
+	<bean id = "myTxManager" class = "org.springframework.jdbc.datasource.DataSouceTrasactionManager">
+		<property name = "dataSources" ref = "myDataSource"/>
+	</bean>
+	<!--生成事务代理-->
+	<bean id = "stockServiceProxy" class = "org.springframework.transaction.interceptor.TransactionProxyFactoryBean">
+		<property name = "transactionManager" ref = "myTxManager"/>
+		<property name = "target" ref = "stockService"/>
+		<property name = "transactionAttributes">
+			<props>
+				<!--key对应的方法即为事务的接入点-->
+				<!--配置事务隔离级别和传播行为-->
+				<prop key = "open*" >ISOLATION_DEFAULT,PROPAGATION_REQUIRED,-StockExcetion</pros>
+			</props>
+		</property>
+	</bean>
+	
+	使用注解：
+		@Transactional(isolation=Isolation.Default,propagation=Propagation.REQUIRED,rollbackFor=StockExcetion.class)
+		
+	使用AspectJ管理事务
+		<!--注册事务管理器-->
+		<bean id = "myTxManager" class = "org.springframework,jdbc.datasource.DataSourceTransactionManager">
+			<property name = "dataSource" ref = "myDataSource"/>
+		</bean>
+		<!--注册事务通知-->
+		<tx:advice id = "txAdvice" transaction-manager="myTxManager">
+			<tx:attributes>
+				<!--指定在连接点方法上应用的事务属性-->
+				<tx:method name = "open*" isolation = "DEFAULT" propagation="REQUIRED" rollback-for="StockException"/>
+			</tx:attributes>
+		</tx:advice>
+		<!--Aop配置-->
+		<aop:config>
+			<!--指定切入点-->
+			<aop:pointcut expression="execution(* *..service.*.*(..)) id = "stockPointcut"/>
+			<aop:advisor advice-ref="txAdvice" pointcut-ref="stockPointcut"/>
+		</aop:config>
+		
+spring与hibernate整合
+	
+		<!--注册数据源：c3p0数据源-->
+		<bean id = "myDataSource class = "com.mchange.v2.c3p0.ComboPooledDataSource">
+			<property name = "driverClass" value = "${jdbc.driverClass}">
+			<property name = "jdbcUrl" value = "${jdbc.url}">
+			<property name = "user" value = "${jdbc.user}">
+			<property name = "password" value = "${jdbc.password}">
+		</bean>
+		<!--注册jdbc属性文件-->
+		<context:property-placeholder location = "classpath:jdbc.properties"/>
+		<!--注册sessionFactory-->
+		<bean id = "mySessionFactory" class = "org.springframework.orm.hibernate5.LocalSessionFactoryBean">
+			<property name = "dataSource" ref = "myDataSource"/>
+			<property name = "mappingDirectoryLocations" value = "com/xxx/beans"/>
+			<property name = "hibernateProperties">
+				<props>
+					<prop key = "hibernate.dialect">org.hibernate.dialect.MySQL5Dialect</prop>
+					<prop key = "hibernate.hbm2ddl.auto">update</property>
+					<prop key = "hibernate.show_sql">true</property>
+					<prop key = "hibernate.format_sql">true</property>
+					<prop key = "hibernate.current_session_context_class">org.springframework.orm.hibernate5.SpringSessionContext</property>
+				</props>
+			</property>
+		</bean>
+		<!--注册Dao-->
+		<bean id = "studentDao" class = "xxx.xxx.xxx.StudentDaoImpl"/>
+			<prperty name = "sessionFactory" ref = "mySessionFactory">
+		</bean>
+		<!--注册Service-->
+		<bean id = "studentService" class = "xxx.xxx.xxx.StudentServiceImpl">
+			<property name = "dao" ref = "studentDao"/>
+		</bean>	
+		<!--注册事务管理器-->
+		<bean id = "myTxManager" class = "org.springframework.orm.hibernate5.HibernateTransactionManager">
+			<property name = "sessionFactory" ref = "mySessionFactory"/>
+		</bean>
+		<!--注册事务通知-->
+		<tx:advice id = "txAdvice" transaction-manager="myTxManager">
+			<tx:attributes>
+				<!--指定在连接点方法上应用的事务属性-->
+				<tx:method name = "add*" isolation = "DEFAULT" propagation="REQUIRED" />
+				<tx:method name = "remove*" isolation = "DEFAULT" propagation="REQUIRED" />
+				<tx:method name = "modify*" isolation = "DEFAULT" propagation="REQUIRED" />
+				<tx:method name = "find*" isolation = "DEFAULT" propagation="REQUIRED"  read-only="true"/>
+			</tx:attributes>
+		</tx:advice>
+		<!--AOP配置-->
+		<aop:config>
+			<!--指定切入点-->
+			<aop:pointcut expression="execution(* *..service.*.*(..)) id = "stockPointcut"/>
+			<aop:advisor advice-ref="txAdvice" pointcut-ref="stockPointcut"/>
+		</aop:config>
+
+SSH
+	web.xml:
+		<!--指定spring配置文件的位置及名称-->
+		<context-param>
+			<param-name>contextConfigLocation</param-name>
+			<param-value>classpath:applicationContext.xml</param-value>
+		</context-param>
+		
+		<!--注册监听器-->
+		<listener>
+			<lisitener-class>org.springframework.web.context.ContextLoaderListener</lisitener-class>
+		</listener>
+		
+		<!--注册OpenSessionInViewFilter，要求其必须在Struts启动这个Filter的前面注册>
+		<filter>
+			<filter-name>openSessionInView</filter-name>
+			<filter-class>org.springframwork.orm.hibernate5.support.OpenSessionInViewFilter</filter-class>
+			<!--默认OpenSessionInViewFilter加载的SessionFactory名称为sessionFactory，
+				这里指定自己定义的SessionFactory的名称，让OpenSessionInViewFilter加载-->
+			<init-param>
+				<param-name>sessionFactoryBeanName</param-name>
+				<param-value>mySessionFactory</param-value>
+			</init-param>
+		</filter>
+		<filter-mapping>
+			<filter-name>openSessionInView</filter-name>
+			<url-pattern>/*</url-pattern>
+		</filter-mapping>
+		
+		<!--注册Struts2启动项-->
+		<filter>
+			<filter-name>Struts2</filter-name>
+			<filter-class>org.apache.struts2.dispatcher,ng.filter.StrutsPrepareAndExecuteFilter</filter-class>
+		</filter>
+		<filter-mapping>
+			<filter-name>Struts2</filter-name>
+			<url-pattern>/*</url-pattern>
+		</filter-mapping>
+		
+	applicationContext.xml:
+		<!--注册数据源：c3p0数据源-->
+		<bean id = "myDataSource class = "com.mchange.v2.c3p0.ComboPooledDataSource">
+			<property name = "driverClass" value = "${jdbc.driverClass}">
+			<property name = "jdbcUrl" value = "${jdbc.url}">
+			<property name = "user" value = "${jdbc.user}">
+			<property name = "password" value = "${jdbc.password}">
+		</bean>
+		<!--注册jdbc属性文件-->
+		<context:property-placeholder location = "classpath:jdbc.properties"/>
+		<!--注册sessionFactory-->
+		<bean id = "mySessionFactory" class = "org.springframework.orm.hibernate5.LocalSessionFactoryBean">
+			<property name = "dataSource" ref = "myDataSource"/>
+			<property name = "mappingDirectoryLocations" value = "com/xxx/beans"/>
+			<property name = "hibernateProperties">
+				<props>
+					<prop key = "hibernate.dialect">org.hibernate.dialect.MySQL5Dialect</prop>
+					<prop key = "hibernate.hbm2ddl.auto">update</property>
+					<prop key = "hibernate.show_sql">true</property>
+					<prop key = "hibernate.format_sql">true</property>
+					<prop key = "hibernate.current_session_context_class">org.springframework.orm.hibernate5.SpringSessionContext</property>
+				</props>
+			</property>
+		</bean>
+		<!--注册Dao-->
+		<bean id = "studentDao" class = "xxx.xxx.xxx.StudentDaoImpl"/>
+			<prperty name = "sessionFactory" ref = "mySessionFactory">
+		</bean>
+		<!--注册Service-->
+		<bean id = "studentService" class = "xxx.xxx.xxx.StudentServiceImpl">
+			<property name = "dao" ref = "studentDao"/>
+		</bean>	
+		<!--注册Action-->
+		<bean id = "registerAction" class = "xxx.xxx.xxx.RegisterAction" scope = "protoType">
+			<property name = "service" ref = "studentService"/>
+		</bean>	
+		<!--注册事务管理器-->
+		<bean id = "myTxManager" class = "org.springframework.orm.hibernate5.HibernateTransactionManager">
+			<property name = "sessionFactory" ref = "mySessionFactory"/>
+		</bean>
+		<!--注册事务通知-->
+		<tx:advice id = "txAdvice" transaction-manager="myTxManager">
+			<tx:attributes>
+				<!--指定在连接点方法上应用的事务属性-->
+				<tx:method name = "add*" isolation = "DEFAULT" propagation="REQUIRED" />
+				<tx:method name = "remove*" isolation = "DEFAULT" propagation="REQUIRED" />
+				<tx:method name = "modify*" isolation = "DEFAULT" propagation="REQUIRED" />
+				<tx:method name = "find*" isolation = "DEFAULT" propagation="REQUIRED"  read-only="true"/>
+			</tx:attributes>
+		</tx:advice>
+		<!--AOP配置-->
+		<aop:config>
+			<!--指定切入点-->
+			<aop:pointcut expression="execution(* *..service.*.*(..)) id = "stockPointcut"/>
+			<aop:advisor advice-ref="txAdvice" pointcut-ref="stockPointcut"/>
+		</aop:config>
+		
+	strus.xml:
+		<struts>
+			<package name = "ssh" namespace = "/test" extends = "strus-default">
+				<action name = "register" class = "registerAction"> 
+					<result>/welcome.jsp</result>
+				</action>
+			</package>
+		</struts>
+		
+	集成Spring与Mybatis框架
+		1）引入Spring jar包：
+		2）引入配置文件，放置在src文件夹中
+			applicationContext.xml
+		3)引入Mybatis jar包
+		4)增加配置文件
+			主配置文件
+			sql映射文件
+		5)融合两个框架
+			引入集成jar包 mybaits-spring-xxx.jar
+			引入c3p0连接池
+			AOP：aopaliance-xxx.jar
+				 aspectjweaver.jar
+			
+			修改配置文件
+				将Mybatis的核心对象委托Spring进行维护和管理
+				
+			增加业务对象，进行测试
+				DAO接口为了和Mybatis框架进行绑定，所以没有实现类，那么无法和service集成，如果想要继承，那么必须构建DAO接口的实现类
+				
+		配置文件：	
+			applicationContext.xml:
+					
+			<context:component-scan base-package="xxx.xxx.spring.*"/>
+			<!--注册数据源：c3p0数据源-->
+			<bean id = "dataSource class = "com.mchange.v2.c3p0.ComboPooledDataSource">
+				<property name = "driverClass" value = "${jdbc.driverClass}">
+				<property name = "jdbcUrl" value = "${jdbc.url}">
+				<property name = "user" value = "${jdbc.user}">
+				<property name = "password" value = "${jdbc.password}">
+			</bean>
+			<!--注册jdbc属性文件-->
+			<context:property-placeholder location = "classpath:jdbc.properties"/>
+			<!--注册sessionFactory-->
+			<bean id = "sqlSessionFactory" class = "org.mybatis.spring.SqlSessionFactoryBean">
+				<property name = "dataSource" ref = "myDataSource"/>
+				<property name = "configLocation" value = "classpath:mybatis-config.xml"/>
+				<property name = "mapperLoactions">
+					<list>
+						<value>classpath:mapper-user.xml</value>
+					</list>
+				</property>
+			</bean>
+			<!--注册Dao-->
+			<bean id = "studentDao" class = "xxx.xxx.xxx.StudentDaoImpl"/>
+				<prperty name = "dataSource" ref = "dataSource">
+			</bean>
+			
+			<!--注册事务管理器-->
+			<bean id = "transaction" class = "org.springframework.jdbc.datasource.DataSourceTransactionManager">
+				<property name = "sessionFactory" ref = "mySessionFactory"/>
+			</bean>
+			<!--注册事务通知-->
+			<!--AOP功能增强器，增加针对每个方法的AOP细节-->
+			<tx:advice id = "txAdvice" transaction-manager="myTxManager">
+				<tx:attributes>
+					<!--指定在连接点方法上应用的事务属性-->
+					<tx:method name = "add*" isolation = "DEFAULT" propagation="REQUIRED" />
+					<tx:method name = "remove*" isolation = "DEFAULT" propagation="REQUIRED" />
+					<tx:method name = "modify*" isolation = "DEFAULT" propagation="REQUIRED" />
+					<tx:method name = "find*" isolation = "DEFAULT" propagation="REQUIRED"  read-only="true"/>
+				</tx:attributes>
+			</tx:advice>
+			<!--AOP配置-->
+			<aop:config>
+				<!--指定切入点-->
+				<aop:pointcut expression="execution(* *..service.*.*(..)) id = "stockPointcut"/>
+				<aop:advisor advice-ref="txAdvice" pointcut-ref="stockPointcut"/>
+			</aop:config>	
+			
+		applicationContext-dao.xml
+			<bean id = "userDao" class = "org.mybatis.spring.mapper.MapperFactoryBean">
+				<property name="mapperInterface" value="xxx.xxx.xxx.dao.UserDao"/>
+				<property sqlSessionFactory ref = "sqlSessionFactory"/>
+			</bean>
+			
+		mapper-user.xml
+			<mapper namespace = "xxx.xxx.xxx.dao.UserDao">
+				<select id="getUserById" resultType="xxx.xxx.xxx.spring.bean.User">
+					select * from tbl_user where id = #{id}
+				</select>
+			</mapper>
+			
+
+		
+		
+		
+		
+		

@@ -1,0 +1,228 @@
+准备流程：
+	1）创建web项目
+	2）引入struts2依赖包，放到WEB-INF/lib下,基本包(以strtus2.5.5为例)：
+		asm-5.1.jar
+		asm-commons-5.1.jar
+		asm-tree-5.1
+		commons-fileupload-1.3.2.jar
+		commons-io-2.4.jar
+		commons-lang3-3.4.jar
+		freemarker-2.3.23.jar
+		javassist-3.20.0-GA.jar
+		log4j-api-2.7.jarognl-3.1.10.jar
+		struts2-core-2.5.5.jar
+	3）在web.xml配置文件中，配置StrutsPrepareAndExec uterFilter
+		<filter>
+			<filter-name>action2</filter-name>
+			 <filter-class>org.apache.struts2.dispatcher.filter.StrutsPrepareAndExecuteFilter</filter-class>
+		</filter>
+		<filter-mapping>
+			<filter-name>action2</filter-name>
+			<url-pattern>/*</url-pattern>
+		</filter-mapping>
+	4)提供struts配置文件，struts.xml,放到/src下
+		eg： 
+		<!--struts2的资源文件都是基于包管理的，一个包需要继承struts-default包，这样才拥有了最基本的功能，譬如设置转发等-->
+		<struts>
+			<package name="struts2" extends=struts-default">
+				<action name = "login" class = "xx.xx.LoginAction">
+					<!--转向信息-->
+					<result name=succcess">login_sucees.jsp</result>
+					<result name=error">login_error.jsp</result>
+				</action>
+		</struts>
+	
+struts2的Action不用继承Struts2中的任何类实现任何接口，是一个POJO对象（纯粹java对象），所以Struts2的Action测试更容易 ，
+需要在Action中提供getter和setter方法，便于收集数据（这样收集数据的模式一般可以成为属性驱动模式）
+Struts2缺省方法名称：public String execute（） throws Exception{};
+	eg：LoginAction核心代码
+		private String username；
+		private String password；
+		public void setUsername(String username){}
+		public void setPassword(String password){}
+		public String getUsername(){}
+		public String getPassword(){}
+		public String execute() throws Exception{
+			if(....){
+				return "success";
+			}
+			else{
+				return "error";
+			}
+		}
+		
+struts2的默认后缀为.action,由struts-default.xml文件决定
+
+struts2简单执行流程：
+	1）所有请求被Struts2核心控制器StrutsPrepareAndExecuteFilter拦截
+	2）根据ActionMapper提供的信息决定如何进行下一步
+	3）ActionMapper主要依赖Struts2的配置文件struts.xml
+	4）接下来为每个Action创建Action代理类ActionProxy
+	5）执行ActionProxy的execute（）方法
+	6）在执行execute（）方式时会会诸葛执行Struts2中的拦截器
+	7）执行完拦截器后才会真正执行目标Action
+	8）目标Action需要返回转向的视图名称
+	9）ActionProxy去的视图名称对象Result完成转向
+	10）生成response对象完成本次请求
+	
+result标签name缺省值为success
+
+Struts2提供了一个Action接口，在Action接口中定义了一些常亮和execute方法
+
+struts2常用配置参数
+	struts.configuration.xml.reload
+		当struts.xml配置回见发生修改，会立刻加载，在生产环境下最好不要配置
+	struts.devMode
+		会提供更友好的提示信息
+	 以上参数配置方式有两种：
+		在struts.properties文件中配置
+		在struts.xml配置文件中
+		
+struts2对团队开发的支持：
+	1.可以为某个模块建立单独的配置文件，该配置文件格式需要和struts.xml配置文件格式一致
+	2.在struts.xml配置文件中采用<include>标签引入
+	
+如何实现模型驱动模式？
+	创建User
+	Action需要实现ModelDriven接口
+	实现getModel（）方法，返回Bean对象
+	
+直接对Action中的对象赋值
+	eg：
+		<form action = "login.action">
+		   `用户：<input type = "text" name= "user.username"><br>
+			密码：<input type = "password" name= "user.password"><br>
+		</form>
+		
+可以通过ActionContext方位Servlet API
+
+
+	<action name = "mustLogin" class = "cn.lo.struts2.MustLoginAction">
+		<!--
+			type的默认值是dispatcher
+		-->
+		<result name="login" type = dispatcher>/login.jsp</result>
+		<!--
+			type = "redirect",可以重定向到任何一个web资源，如jsp或Action
+							  如果要重定向到Action，需要写上后缀：xxx.action
+			type = "redirectAction",可以重定向到Action，不需要写后缀，此种方式更通用些
+		-->
+		<!--全局result-->
+		<global results>
+		</global results>
+		
+可以通过实现装配接口，完成对Servlet API的访问
+	*ServletRequestAware取得HttpServletRequest对象
+	*ServletResponseAware取得HttpServletResponse对象
+	*ServletContextAware取得ServletContext对象（工具类）
+	
+可以通过ServletActionContext提供的静态方法取得Servlet API的访问
+	*getPageContext（）
+	*getRequest（）
+	*getResponse（）
+	*getSerlvetContext（）
+	
+命名空间和字符集设置
+	采用命名空间，可以区分不同包下相同的Action名称
+	如果package的namespace属性没有指定，使用默认的命名空间为“”
+	struts2中Action完整路径应该为：namespace+Action的名称
+	查找规则：首先在指定的命名空间下查找Action，如果找到了就是用此Action，如果没找到在上层目录中查找，一直到根，在此过程中如果找到
+	就使用此Action，否则抛出异常
+
+设置字符编码
+	*struts.properties配置文件中
+		struts.i18n,encoding
+	*struts.xml配置文件中	
+		<constant name="struts.i18n.encoding" value = "GB18030"/>
+	*在StrutsPrepareAndExecuteFilter中配置
+		<filter>
+			<filter-name>struts2</filter-name>
+			<filter-class>org.apache.struts2.dispatcher.filter.StrutsPrepareAndExecuteFilter</filter-class>
+			<init-param>
+				<param-name>struts.i18n.encoding</param-name>
+				<param-name>GB18030</param-name>
+			</init-param>
+		</filter>
+		
+struts2的Action中包含多个方法（方法的动态调用）
+	方法的动态调用方式：
+		action名称 + ! + 后缀
+			<a href = "user!add.action">添加用户</a><br>
+		动态调用参数配置，默认为true，可以调用，否则不能调用
+			<constant name = "struts.enable,DynamicMethodInvocation" value = "false"/>
+		!!Action中的所有方法必须和execute方法一致（参数，返回值，异常最好也一样）
+		
+	使用method和通配符
+		<action name = "*User" class="cn.lo.struts2.UserAction" method = "{1}">
+			<result>/{1}Success.jsp</result>
+		</action>
+		
+	在Sturts2的<action>标签class、name、method和result标签上都可以使用通配符
+	
+上传
+	struts2默认采用了apache commons-fileupload
+	struts2支持三种类型的上传组件
+	需要引入commons-fileupload相关依赖的jar包
+		*commons-io-xxx.jar
+		*commons-fileupload-xxx.jar
+	表单中需要采用POST提交方式，编码类型使用：multipart/form-data
+	struts2的Action
+		取得文件名称->>规则：输入域的名称+固定字符串FileName
+		取得文件数据->>规则：File输入域的名称
+		取得内容类型->>规则：输入域的名称+固定字符串ContentType
+	取得输入流采用输出流写文件
+	
+类型转换器：
+	如何实现struts2的类型转换器
+		*继承StrutsTypeConverter
+		*覆盖convertFromString和convertToString方法
+	
+	注册类型转换器
+		*局部类型转换器，局部类型转换器只对当前Action起作用，需要提供如下配置文件：
+			MyActionName-conversion.properties,MyActionName指需要使用转换器的Action名称
+			“-conversion.properties”固定字符串，不能修改。我们AddUserAction类型转换器的配置目录中，该配置文件的格式为：Action中的属性名称=转换器的完整路径，如：
+			birthday=cn.lo.struts2.UtilDataConverter
+		*全局类型转换器，需要提供如下配置文件：xwork--conversion.properties，该配置文件需要放到src下，该配置文件的格式：需要转换的类型完整路径=转换器的完整路径，如：
+			java.util.Date=cn.lo.struts2.UtilDataConverter
+		同时存在，局部优先
+	
+异常
+	全局异常和局部异常
+	在页面中用EL表达式获取异常信息
+		${exception.message}
+		${exceptionStack}
+
+拦截器
+	struts2的拦截器只能拦截Action，拦截器是AOP的一种思路，可以使我们的系统架构更松散，可以插拔，容易互换，代码不改变的情况下很容易满足客户需求
+	如何实现拦截器（整个拦截器体现了责任链模式）
+		*继承AbastractInterceptor（体现了缺省适配器模式）
+		*实现Interceptor
+	
+	如果自定义了拦截器，缺省拦截器会失效
+	
+	拦截器栈：多个拦截器的和
+	
+	定义缺省拦截器<default-interceptor-ref>,所有Action都会使用
+	
+	eg:
+		<interceptors>
+			<!--定义记录日志拦截器-->
+			<interceptor name="myLogInterceptor" class="cn.lo.strtus2.MyLogInterceptor"/>
+			
+			<interceptor-stack name="myInterceptorStack">
+				<interceptor-ref name="defaultStack"/>
+				<interceptor-ref name="myLogInterceptor"/>
+			</interceptor-stack>
+		</interceptors>
+		
+	
+	
+		
+	
+	
+	
+	
+  
+
+
+

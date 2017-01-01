@@ -1,0 +1,204 @@
+对象与类：
+	类间关系：1.依赖（use） 2.聚合（has） 3.继承（is）
+反射：
+	Filed描述类的域；Method描述方法；Constructor描述构造器
+	在Method类中有invoke方法，允许调用包装在当前Method对象中的方法。 Object invoke（Object obj，Object ... args）
+继承设计的技巧：
+	1）将公共操作和域放在超类；
+	2）不要使用protected；
+	3）使用继承实现is-a关系；
+	4）除非每个继承方法都有意义，否则不要使用继承；
+	5）在覆盖方法时，不要改变预期的行为；
+	6）使用多态，而非使用类型信息；
+	7）不要过多的使用反射。
+代理：
+	利用代理可以在运行时创建一个实现了一组给定接口的新类。
+	所有的代理类都覆盖了Object类方法中的toString , equals, hashCode.
+	对于特定的类加载器和预设的一组接口来说，只能有一个代理类。
+	代理类一定是public和final。如果代理类实现的所有接口都是public，代理类就不属于某个特定的包。
+	
+	Object invoke（Object proxy , Method mothod, Object[] args）
+	定义了代理对象调用方法时希望执行的动作。
+	
+	static Object newProxyInstance（ClassLoader loader， class[] interfaces, InvocationHandler handler）
+	构造一个实现指定接口的代理类的实例。所有的方法都将调用代理对象的invoke方法。
+	
+异常：
+	由程序导致的错误属于RuntimeException,而程序本身没有问题，由于I/O错误之类的问题导致的属于其他异常。
+	
+	什么时候需要在方法中用throw子句声明异常，什么异常必须使用throw子句进行声明：
+	1）调用一个抛出已检查异常的方法；
+	2）程序运行过程中发现错误，并且利用throw语句抛出了一个已检查异常；
+	3）程序出现错误；
+	4）jvm和运行库时出现的内部错误。
+	
+	如果编写一个覆盖超类的方法，而这个方法又没有抛出任何异常，那么这个方法就必须捕获方法代码中出现的每一个异常，不允许在子类的throws说明符中出现超过超类方法所列出的异常类范围。
+	
+	可以使用Throwable initCause（Throwable e） 封装异常
+	
+	使用finally子句进行资源回收。
+	
+	使用带资源的try语句的最简形式：
+		try（Resource res = ...）
+		{
+			work with res
+		}
+	try块退出时，会自动调用res.close()。
+
+泛型：
+	虚拟机没有泛型类型对象，所有的对象都属于普通类。
+	无论何时定义一个泛型，都自动提供了一个相应的原始类型。原始类型的名字就是删去类型参数后的泛型类型名。擦除类型变量，并替换为限定类型（无限定的变量使用Object）。
+	
+	协变返回类型：导出类的被覆盖方法可以返回基类方法的返回类型的某种导出类型。
+	
+	java泛型转换的事实：
+	1）虚拟机中没有泛型，只有普通的类和方法。
+	2）所有的类型参数都用他们的限定类型替换。
+	3）桥方法被合成来保持多态。
+	4）为保持类型安全性，必要时插入强制类型转换。
+	
+	java泛型的约束和局限性：
+	1）不能使用基本类型实例化类型参数；
+	2）运行时类型查询只适用于原始类型；
+	3）不能创建参数化类型的数组；使用Array.newInstance是推荐的方式；
+	4）不能实例化类型变量；
+		但是可以通过反射来构造泛型对象。但是不能直接调用T.class.newInstance,必须将Class<T>对象作为泛型参数传入方法中；
+	5)禁止使用带有类型变量的静态域和方法；
+	6）不能抛出或捕获泛型类的实例；
+	
+	带有超类型限定的通配符可以向泛型对象写入，带有子类型限定的通配符可以从泛型对象读取。
+	对于无界通配符，get的返回值只能赋值给一个Object，set方法不能被调用。
+	假设有类A，A<?> 和 A 本质的不同在于：可以用任意Object对象调用原始的A类的set方法。
+	
+	存取法则：
+		如果你想从一个数据类型里获取数据，使用? enxtends 通配符
+		如果你想把对象写入一个数据结构里，使用? super通配符
+		如果既想读，又想写，不使用通配符
+	
+集合：
+	集合类的基本接口是Collection接口，这个接口有两个基本方法：
+		public interface Collection<E>
+		{
+			boolean add(E element);
+			Iterator<E> iterator();
+		}
+	
+		iterator 接口包含三个方法：
+		public interface Iterator<E>
+		{
+			E next();
+			boolean hasNext();
+			void remove();
+		}
+		
+	具体的集合：
+		ArrayList
+		LinkedList
+		ArrayDeque
+		HashSet
+		TreeSet
+		EnumSet
+		LinkedHashSet
+		PriorityQueue
+		HashMap
+		TreeMap
+		EnumMap
+		LinkedHashMap
+		WeakHashMap
+		IdentityHashMap
+		
+	集合框架的接口：
+		Iterable
+		   |
+	   Collection                Map         Iterator     RandomAccess
+	 |-----|-------|              |             |
+   List   Set    Queue	      SortedMap    ListIterator
+		   |       |              | 
+	   SortedSet Deqeue       NavigableMap
+	       |         
+      NavigableSet	
+
+	集合框架中的类：
+						AbastractCollection
+	     |----------------------|-----------------------|------------------|
+	AbastractLIst          AbastractSet           AbastractQueue           |                       AbstractMap
+         |                   |------|                   |                  |                |---------------------|
+	  Abastract           HashSet  TreeSet        PriorityQueue         ArrayDeque       HashMap                TreeMap                  
+	SequentialList
+	|----------|
+LinkedList   ArrayList
+		
+	通过使用视图可以获得其他的实现了集合接口和映射表接口的对象。
+	
+多线程：
+	锁：
+		锁用来保护代码片段，任何时刻只能有一个线程执行被保护的代码。
+		锁可以管理试图进入被保护代码段的线程。
+		锁可以拥有一个或多个相关的条件对象。
+		每个条件对象管理那些已经进入被保护的代码段但还不能运行的线程。
+		
+	每个对象有一个内部锁，并且该锁有一个内部条件。由锁来管理那些试图进入synchronized方法的线程，由条件来管理那些调用wait的线程。
+	
+	Volatile域：如果声明一个域是volatile，那么编译器和虚拟机就知道该域是可能被另一个线程并发更新的。
+	
+	线程局部变量：
+		以类A的对象为例，要为每一个线程构造一个A的实例，可以使用如下代码：
+		public static final ThreadLocal<A> a = new ThreadLocal<A>(){
+			protected Abastract initialValue(){
+				return new A();
+			}
+		}
+		要访问a的具体方法，可以调用： a.get().mothod();
+		在调用get()方法时，就会调用initialValue方法，返回属于当前线程的实例。
+
+动态绑定(多态)
+	当直接或间接调用成员方法时，JVM会将方法和实际的内存进行绑定，会调用实际内存中的成员方法。
+	动态绑定和属性没有任何关系，属性的调用在哪里声明，在哪里使用。
+	
+方法重载
+	调用哪个重载的方法，只和参数的类型，顺序，个数有关系
+	
+java内存空间
+	栈：存放基本类型数据和对象的引用，但对象本身不放在栈中，而存放在堆中
+	堆：存放用new产生的数据
+	静态域：存放在对象中用static定义的静态成员
+	
+finally
+	
+	返回2
+	i = 0;
+	try{
+		return i++;
+	}finally{
+		return ++i;
+	}
+	返回0
+	i = 0;
+	try{
+		return i++;
+	}finally{
+		++i;
+	}
+	
+final：
+	静态常亮 static final 不需要加载类就可以获取
+	
+finalize
+	堆内存中的对象以及它的关联对象如果没有被堆内存以外的引用指向时，是无用对象，会被垃圾回收器回收。 
+	
+protected
+	访问权限(同类，同包，子类) 这儿是和方法的调用者比较
+	clone方法的例子！！！
+	注意方法的提供者和调用者的关系！！！
+	
+import ： 导入指定包中的类
+import static ： 导入类中的静态方法
+
+	
+		
+	
+	
+	
+	
+	
+	

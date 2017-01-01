@@ -1,0 +1,20 @@
+JDBC本质：
+	1.java daba base connectivity
+	2.标准接口
+	
+JDBC编程六步
+	1.注册驱动
+	2.获取连接
+	3.获取数据库操作对象
+	4.执行SQL语句
+	5.处理查询结果
+	6.释放资源
+	
+URL：
+	统一资源定位符
+	代表网络中某个资源的路径
+	URL组成：协议，IP地址，端口号，资源名称
+	
+MySQL支持的默认最大连接数量是100个
+
+一个Connection可以创建多个Statement，一个Statement可以得出多个ResultSet,所以关闭的时候，先关闭ResultSet，再关闭Statement，最后关闭Connection

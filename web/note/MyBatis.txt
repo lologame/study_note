@@ -1,0 +1,332 @@
+环境配置
+	1） 导入jar包
+	2）增加配置文件，放在src文件夹中
+		主配置文件：数据库连接信息，映射文件路径
+		SQL映射文件：将执行的sql进行关联映射
+	
+	主配置文件：
+		<configuration>
+			<properties resource = "db-config.properties"></properties>
+			<environments default = "development">
+				<!--环境配置-->
+				<environment id = "development">
+					<!--事务管理器
+						事务处理采用JDBC的处理方式-->
+					<transactionManager type = "JDBC"/>
+					<!--数据源
+						POOLED表示使用连接池
+						UNPOOLED表示不适用连接池-->
+					<dataSource type = "POOLED">
+						<prperty name = "driver" value = "${jdbc.driverClass}">
+						<prperty name = "url" value = "${jdbc.url}">
+						<prperty name = "username" value = "${jdbc.username}">
+						<prperty name = "password" value = "${jdbc.password}">
+					</dataSource>
+				</environment>
+			</environments>
+			<!--映射文件配置-->
+			<mappers>
+				<mapper resource = "mybatis-user-mapping.xml"/>
+			</mappers>
+		</configuration>
+		
+	映射文件：
+		<mapper namespace = "test">
+			<!--查询标签
+				id属性表示sql映射id，将id和sql绑定在一起，访问id的时候，就等同于访问sql文
+				resultType属性表示查询结果所转换的类型，取值为类的全名(包含包名)--
+				标签体为sql，但是不是最终要执行的sql，需要被框架进行转换
+			-->
+			<select id = "selectUser" resultType = "xxx.xxx.xxx.User"> 
+				select * from t_user
+			</select>
+		</mapper>
+		
+	基本代码：
+		InputStream inputStream = Resource.getResourceAsStream("mybatis-config.xml");
+		
+		SqlSessionFactory sqlSessionFactory = new SqlSessionFactoryBuilder(),build(inputStream);
+		
+		SqlSession session = sqlSessionFactory.openSession();
+		
+		List<User> list = session.selectList("selectUser");
+		//User user = session.selectOne(""selectUser);
+		//Map<String,Object> map = session.selectMap("selectUser","id");
+		
+		session.close();
+		
+	命名空间：
+		主要用于区分不同映射文件相同中的相同名称sql映射id
+		
+		同一个映射文件中无法使用命名空间区分相同名称sql映射id
+		
+		使用方式：命名空间.sql映射id
+		
+		如果能够保证sql映射id不会重复，那么命名空间可以省略
+		
+		命名空间的访问方式：
+			命名空间.sql映射id ==>userDao.selectUser
+			
+			将命名空间和接口进行绑定，然后将方法和映射id进行绑定
+			
+			当调用接口中的方法时，等同于调用命名空间中的sql映射id
+			
+			框架采用JDK动态代理实现接口的绑定。
+			
+		通过命名空间可以打印详细的log
+			log4j.logger.命名空间的名称=TRACE
+			
+	参数输入
+		JDBC：
+			a)拼串
+				会出现sql注入问题
+				相同的sql，但参数不一样，会增加编译次数，降低效率
+			b)占位符(?)
+				不会出现sql注入问题
+				多次执行相同的sql，减少编译次数，提高效率
+				
+		Mybatis
+			a)占位符：#{参数名成}
+				如果传递多个参数，如果参数是字符串或简单类型，则所有参数的取值完全相同。
+				如果传递多个参数，参数类型自定义，sql文会从自定义类型的属性中取出参数(必须保证名称相同)。 
+				如果传递多个参数，使用集合类型Map，参数名称和key保持一致。
+			
+			b)拼串
+				占位符传递参数一般在条件中使用，其他场合一律使用拼串
+				${参数名称}
+				
+			c)模糊查询
+				select * from t_user where username like concat('%',#{username},'%')
+			
+	输出
+		将查询结果转换为指定的对象时，需要遵循查询的规则。
+		
+		将查询结果字段名称和指定类型的属性名称进行匹配，如果匹配成功，那么反射调用，
+		如果匹配不成功，那么就什么都不做，极限情况下，一个属性都没有匹配成功，对象不会被创建，返回null
+		
+		如果名称不一致，也希望匹配成功，可以使用如下方式：
+			1)将数据库的查询结果字段使用别名
+			2)将查询结果字段的名称通过独立的配置方式进行改变
+				<resultMap type = "xxx.xxx.xxx.Emp" id = "empMap">
+					<id column="usercode" property="eno"/>
+					<result colunm="username" property="ename"/>
+				</resultMap>
+				<select id="selectUsers" resultMap="empMap">
+					select * from t_user
+				</select>
+			3)查询结果可以转换为很多中类型
+				a)自定义类型
+				
+				b)转换为map，将查询结果字段名作为key，将查询结果值作为val，形成键值对对象，放置在map中
+					<select id="selectUserByCode" resultMap="java.util.HashMap">
+						select * from t_user where usercode = 'xxx'
+					</select>
+					
+				c)简单类型，将查询结果的第一个字段值返回
+				
+	分页查询
+		逻辑分页：
+			一次性将数据库的所有数据查询出来，放置在缓存中。
+			通过逻辑算法获取指定页码的数据。这种分页方式，称之为逻辑分页。
+			查询效率快(内存操作 ),但是影响其他软件的使用，降低服务器性能。
+			
+		物理分页(推荐)
+			采用数据库本身的分页机制实现分页查询的操作。称之为物理分页。
+			查询效率低(进程操作)，不影响服务器性能。推荐使用。
+			
+	动态参数查询
+		表示查询条件不是固定不变的，由用户来决定是否使用参数。
+		
+		框架采用特殊的标签进行参数条件的判断
+		<if>:判断参数条件是否成立，如果成立，将表前提中的sql和外部的sql拼接在一起
+		<where>:框架根据条件自动判断是否增加关键字where，如果第一个条件成立时，以and开头，那么and会自动省略
+		
+		<select id = "selectUsers" resultType = "xxx.xxx.xxx.User">
+			select * from t_user
+			<where>
+				<if test = "usercode != null">
+					and usercode = #{usercode}
+				</if>
+				<if test = "userpswd != null">
+					and userpswd = #{userpswd}
+				</if>
+			</where>
+		</select>
+		
+		<choose>
+			<when test = ""></when>
+			<otherwise></otherwise>
+		</choose>
+		
+		循环遍历：
+			<select id = "selectUsersInRange" resultType = "xxx.xxx.xxx.User">
+				select * from t_user
+					where usercode in(
+						<foreach collection = "usercodes" item = "usercodes" separator = ",">
+						#{usercode}
+						</foreach>
+					)
+			</select>
+			
+	DML
+		DDL:数据定义语言
+			create，drop
+		DML：数据操作语言
+			insert，upadate，delete
+		DQL：数据查询语言
+			select
+		
+		框架默认的DML操作时使用事务，所以执行DML之后，没有提交事务，数据不会成功操作。
+		
+		insert，upadate，delete
+		
+		获取自增长主键：
+			Mysql：
+				<insert>
+					...
+					<selectKey keyProperty = "id" resultType = "java.lang.Integer">
+						select @@identity as id
+					</selectKey>
+					...
+				</insert>
+				
+	事务
+		事务的传播行为：多个事务在嵌套使用时的处理方式。
+			
+		事务的隔离级别：
+			脏读：读到了没提交的数据
+			不可重复读： 同一个事务中两次查到的某行的结果不一样  (表级锁)
+			幻读：统计到了其他事务insert的数据                   (行级锁)
+			
+			读已提交(解决脏读)
+			可重复读(解决不可重复读)
+			序列化(解决幻读)
+			
+		Mybatis的事务处理代码
+			try{
+				...
+				session.commit();
+			}finally{
+				session.close();
+			}
+	
+	缓存：
+		一级缓存(SqlSession):默认可以使用
+			框架处理缓存是依赖于sql映射id。
+			一级缓存无法跨越session，一旦session发生变化，一级缓存失效。
+		二级缓存(sqlSessionFactory)：默认无法使用
+			增加<cache></cache>可实现
+			缓存类必须实现可序列化接口。
+			
+			<!--
+				eviction:移除策略
+					LRU:最近最少使用的对象会被移除
+					FIFO：先进先出
+			-->
+			
+	多表查询
+		表关系：
+			一对多：
+				表设计：在多的一方增加一的一方的外键
+				类设计：在一的一方增加多的一方的数据集合引用(List)
+			多对一：
+				表设计：在多的一方增加一的一方的外键
+				类设计：在多的一方中增加一的一方的引用
+			一对一：
+			多对多：
+			
+		映射文件实现一对多和多对一：	
+			mybatis-student-mapping.xml：
+			
+			<mapper namespace="student">
+				<resultMap type = "xxx.xxx.bean.Student" id = studentMap>
+					<id column="sid" property="sid"/>
+					<result column="sname" property="sname"/>
+					<association property=""classes javaType="xxx.xxx.bean.Classes">
+						<id column="cid" property="cid"/>
+						<result column="cname" property="cname"/>
+					</association>
+				</resultMap>
+				
+				<select id="selectStudent" resultMap="studentMap">
+					select 
+						s.*,
+						c.name
+					from p_student s
+					join p_classes c on s.cid = c.cid
+					where sid = #{sid}
+				</select>
+				
+				<!--为了实现一对多查询用-->
+				<select id="selectStudentByClasses" resultType="xxx.xxx.bean.Student">
+					select * from p_student where cid = #{cid}
+				</select * from p_student where cid = #{cid}>
+			<mapper>
+			
+		mybatis-classes-mapping.xml：
+		
+		<mapper namespace="classes">
+			<resultType type="xxx.xxx.bean.Classes" id="classesMap">
+				<id column="cid" property="cid"/>
+				<result column="cname" property="cname">
+				<collection property="students"
+							ofType="xxx.xxx.bean.Student"
+							column="cid"
+							select="student.selectStudentByClasses">
+				</collection>
+			</resultMap>
+			
+			<select id="selectClasses" resultMap="classesMap">
+				select * 
+				from p_classes
+				where cid = #{cid}
+			</select>
+		</mapepr>
+		
+		自关联：
+		<mapper namespace="menu">
+			<resultType type="xxx.xxx.bean.Menu" id="menuMap">
+				<id column="id" property="id"/>
+				<result column="pid" property="pid">
+				<result column="menuname" property="menuname">
+				<collection property="childmenus"
+							ofType="xxx.xxx.bean.Menu"
+							column="id"
+							select="selectChildMenus">
+				</collection>
+			</resultMap>
+			
+			<select id="selectChildMenus" resultMap="menuMap">
+				select * 
+				from t_menu
+				where pid = #{pid}
+			</select>
+		</mapepr>
+		
+	延迟加载
+		mybatis默认不启用延迟加载，若需启用：
+			<setting name="lazyLoadingEnabled" value="true"/>
+		
+		默认框架会采用侵入式的延迟加载。
+			如果查询主动方数据，而不使用，那么关联数据是不会被查询的。
+			如果使用了主动方数据，那么关联数据即使没有使用也会被查询。
+		
+		可以禁用侵入式延迟加载功能
+			<setting name = "aggressiveLazyLoading" value="false"/>
+			
+	动态sql
+		如果程序存在复杂sql，无法用动态标签实现，可以采用框架提供的动态sql实现。
+		
+			
+			
+			
+	
+			
+					
+					
+				
+			
+		
+				
+	
+	

@@ -1,0 +1,499 @@
+持久化方式：
+	1）序列化
+	2）JDBC
+	3）ORM（object-relationship mapping）实质：将关系数据库中的业务数据用对象的形式表示出来
+	4）JPA框架  javaEE5 标准ORM接口
+
+Hibernate工作原理
+	
+	application------------------> API ----------------------> JDBC ----------------------> data base
+									|                             |
+						     hibernate.cfg.xml               *.hbm.xml
+						     数据库连接信息                   映射关系
+						     映射文件信息
+							 							 
+定义映射文件：
+eg：
+	<hibernate-mapping>
+		<!--类到表的映射 属性到字段的映射-->
+		<class name = "cn.lo.beans.Student" table = "t_student">
+			<id name = "id" column = "tid">
+				<generater class = "native"/>
+			</id>
+			<property name = "name" column = "tname/">
+			<property name = "age" column = "age/">
+			<property name = "score" column = "tscore/">
+		</class>
+	</hibernate-mapping>
+
+定义主配置文件：
+eg：
+	<hibernate-configuration>
+		<session-factory>
+			<!--DB连接四要素-->
+			<property name = "hibernate.connection.driver_class">com.mysql.jdbc.driver</property>
+			<property name = "hibernate.connection.url">jdbc:mysql：//127.0.0.1/test</property>
+			<property name = "hibernate.connection.username">root</property>
+			<property name = "hibernate.connection.username">123</property>
+			<!--方言-->
+			<property name = "hibernate.dialect">org.hibernate.dialect.MySQL5Dialect</property>
+			<!---c3p0数据源->
+			<property name = "hibernate.connection.provider_class">org.hibernate.c3p0.internal.C3P0ConnectionProvider</property>
+			<!--当前session上下文-->
+			<property name = "hibernate.current_session_context_class">thread</property>
+			<!--自动建表-->
+			<property name = "hibernate.hbm2ddl.auto">update</property>
+			<!--显示sql-->
+			<property name = "hibernate.show_sql">true</property>
+			<!--格式化sql-->
+			<property name = "hibernate.format_sql">true</property>
+			<!--注册映射文件-->
+			<mapping resourece = "xxx/xxx/xxx/Student.hbm.xml"/>
+		</session-factory>
+	</hibernate-configuration>
+	
+核心代码：
+	eg:
+		//1.加载主配置文件
+		Configuration configure = new Configuration().configure();
+		//2.创建session工厂
+		SessionFactory sessionFactory = configure.buildSessionFactory();
+		//3.获取session
+		Session session = sessionFactory.getCurrentSession();
+		try {
+			//4.开启事务
+			session.beginTransaction();
+			//5.操作
+			Student student = new Student("Lucy",16,90.5);
+			session.save(student);
+			//6提交事务
+			session.getTransaction().commit();
+		} catch (Exception e) {
+			// TODO: handle exception
+			e.printStackTrace();
+			session.getTransaction().rollback();
+		}
+		
+
+		
+增删改查核心代码：
+	eg：
+		删除：
+			Student stu = new Student()；
+			stu.setId(5);
+			session.delete(stu);  //删除根据id进行
+		改：
+			Student stu = new Student()；
+			stu.setId(5);
+			session.update(stu);
+		saveOrUpdate();
+		查：
+			Student stu = session.load(Student.class,6);
+		
+	session必须在事务环境下运行，无论增删改查。
+	
+	若要查询的对象不存在，get返回null，load抛出异常
+	
+	对于不同操作对象的增、删、改操作，无论其代码的书写语句顺序是怎样的，底层SQL的执行顺序都是insert、update、delete
+	
+sessionFactory ： 单例的，线程安全的;
+session:轻量级的，线程不安全；
+
+session的获取：
+	openSession():每次执行获取一个新的对象。必须手动关闭。无须注册运行环境，查询可以不在事务内运行。
+	getCurrentSession():获取当前线程的session。自动关闭session，必须注册运行环境，查询可以不在事务内运行。
+	
+可以用hibernate.properties文件替代hibernate.cfg.xml中poroperty的设定，xml的优先级更高
+
+一个映射文件可以注册多个实体类。表名与字段名默认同名映射。
+	eg：
+	<hibernate-mapping package = "cn.lo.beans">
+		<!--类到表的映射 属性到字段的映射-->
+		<class name = "Student" >
+			<id name = "id" >
+				<generater class = "native"/>
+			</id>
+			<property name = "name" >
+			<property name = "age" ">
+			<property name = "score" >
+		</class>
+		<class name = "Teacher">
+			<id name = "id" >
+				<generater class = "native"/>
+			</id>
+			<property name = "name" >
+			<property name = "age" ">
+			<property name = "score" >			
+		</class>
+	</hibernate-mapping>
+	
+内置主键生成策略：
+	increment：Hibernate自己维护主键的值。当准备在数据库表中插入一条新纪录时，首先从数据库表中获取当前主键字段的最大值，然后在最大值基础上加1。
+	identity：该策略使用数据库自身的自增长来维护主键值。如mysql使用auto_increment来维护。
+			  该策略在生成主键值时会出现以下情况：对于插入操作，即使最后的执行是回滚，DB中记录主键值的变量也会增一。
+	sequence：不支持mysql。
+	native：  由Hibernate根据所使用的数据库支持能力从identity、sequence生成策略中选择一种
+	UUID：    主键具有全球唯一性，一般用在分布式事务中
+	assigned: 该策略的主键来自于程序员手工设置，通过setId（）设置。
+	
+Hibernate对象状态：
+	1）瞬时态（transient）：内存中存在，DB中无记录，与session无关
+	2）持久态（persistent）：内存中存在，DB中有记录，与session相关，在session中有对象的副本。
+	3）游离态（detached）：内存中存在，DB中有记录，与session无关
+	4）无名态：内存中不存在，DB中有记录，与session无关
+	        
+			       new（）                      garbage（）
+	      ------------------------>瞬时态-------------------------
+	                        save() |  /|\  
+					saveOrUpdate() |   |delete()
+	            get()             \|/  |
+	无名态----------------------->持久态
+      /|\       load()              |  /|\
+garbage|                   evict（）|   |update（）
+       |                   close（）|   |saveOrUpdate（）
+       |                  clear（）\|/  |
+	   |---------------------------游离态
+
+
+	   
+sql中出现的是表名和字段名
+hql中出现的是类名与属性名
+QBC查询：纯面向对象
+
+单表查询
+	1）查询所有
+	SQL eg:
+		String sql = "select * from t_student"；
+		List<Student> list = session.createSQLQuery(sql).addEntity(Student.class).list();
+	HQL eg:
+		String hql = "from Student";
+		List<Student> list = session.createQuery(hql).list();
+	QBC eg：	
+		List<Student> list = session.createCriteria(Student.class).list();
+		
+	2)排序：
+		String sql = "select * from t_student order by age desc"；
+		List<Student> list = session.createSQLQuery(sql).addEntity(Student.class).list();
+		
+		String hql = "from Student s order by s.age desc";
+		List<Student> list = session.createQuery(hql).list();
+		
+		List<Student> list = session.createCriteria(Student.class).addOrder(Order.desc("age")).list();
+		
+	3)绑定条件
+		String hql = "from Student where age > ? and score < ?";
+		List<Student> list = session.createQuery(hql).setInteger(0,20).setDouble(1,94).list();
+	    
+		String hql = "from Student where age >: myage and score <: myscore";
+		List<Student> list = session.createQuery(hql).setInteger("myage",20).setDouble("myscore",95.5).list();
+		
+		String hql = "from Student where age >: myage and score <:myscore";
+		List<Student> list = session.createQuery(hql).setParameter("myage",20).setParameter("myscore",95.0).list();
+	
+	4)分页查询
+		 String sql = "select * from t_student limit ?,?";
+		 List<Student> list = session.createSQLQuery(sql).addEntity(Student.class).setInteger(0,4).setInteger(1,3).list();
+		 
+		 String hql = "from Student";
+		 List<Student> list = session.createQuery(hql).setFirstResult(4).setMaxResult(3).list(); 
+		 
+	5)模糊查询
+		String hql = "from Student where name like :myname";
+		List<Student> list = session.createQuery(hql).setString("myname","%x%").list();
+		
+	6)唯一性查询
+		Stirng hql = "from Student where id =:myid";
+		List<Student> list = session.createQuery(hql).setInteger("myid",3).uniqueResult();
+		
+	7)聚合函数查询
+		String hql = "select count(*) from Student";
+		Long count = (Long) session.createQuery(hql).uniqueResult();
+		
+	8)投影查询
+		String hql = "select new Student(name,age) from Student" ;
+		List<Student> list = session.createQuery(hql).list();
+		
+	9)分组查询
+		 String hql = "from Student group by age";
+		 List<Student> list = session.createQuery(hql).list(); //每个年龄段第一人
+		 
+		 String hql = "select age from Student group by age";
+		 List<Integer> list = session.createQuery(hql).list(); //共有几个年龄段
+		 
+		 String hql = "select age from Student group by age having count(age) > 1";
+		 List<Integer> list = session.createQuery(hql).list(); 
+		
+	Hibernate有缓存机制，第一次用list（）查询，第二次用iterate（）查询
+	
+	10）命名查询
+		<query name = "selectById">from Student where id =: myid</query>
+		
+		Student student = (Student)session.getNamedQuery("selectById").setInteger(3).uniqueResult;
+		
+关联关系映射： 
+
+	none：在保存，更新，删除时，忽略其他关联的对象。
+	save-update：当通过session的save(),update(),saveOrUpdate()方法来保存或更新当前对象时，将级联到其他DB中的相关联的表。
+	delete：当通过session的delete()方法删除当前对象时，将级联删除所有关联的对象。
+	all:包含save-update和delete级联的所有行为。
+	delete-orphan：删除所有和当前对象接触关联关系的对象。
+	all-delete-orphan：包含all和delete-orphan级联的所有行为。
+	
+	一对多单向关联：
+	核心配置文件：
+		Coutry.hbm.xml:
+		eg：	
+			<class name = "Country">
+				<id>
+					<generater class = "native"/>
+				</id>
+				<property name = "cname"/>
+				<!--对关联属性的映射，inverse=true，表示一的那方放弃关联关系维护权，只有一方具有放弃维护权的资格-->
+				<set name = miniseters cascade = "save-update" inverse = "true">
+					<key column="coutryId">
+					<one-to-many class="Minister">
+				</set>
+			</class>
+			
+		Minister.hbm.xml:
+		eg:
+			<class name = "Minister">
+				<id>
+					<generater class = "native"/>
+				</id>
+				<property name = "mname"/>
+			</class>
+	核心代码：
+		session.beginTransaction();
+		
+		Mninister minister1 = new Minister("Jack");
+		Mninister minister2 = new Minister("Lucy");
+		Mninister minister3 = new Minister("David");
+		
+		Country coutry = new Country("USA");
+		
+		//coutry维护关联
+		coutry.getMinister().add(minister1);
+		coutry.getMinister().add(minister2);
+		coutry.getMinister().add(minister3);
+		
+		//谁在维护关联就save谁
+		session.save(country);
+		
+		session.getTransaction().commit();
+		
+一对多双向关联：
+	
+	核心配置文件：	
+		Minister.hbm.xml:
+		eg:
+			<class name = "Minister">
+				<id>
+					<generater class = "native"/>
+				</id>
+				<property name = "mname"/>
+				<!--关联属性映射-->
+				<many-to-one name = "country" cascade = "save-update" class="Country" column="countryId"/>
+			</class>
+			
+	核心代码：	
+		eg：
+			session.beginTransaction();
+	
+			Mninister minister1 = new Minister("Jack");
+			
+			Country coutry = new Country("USA");
+			
+			//minister维护关联
+			minister1.setCountry(country);
+			
+			//谁在维护关联就save谁
+			session.save(country);
+			
+			session.getTransaction().commit();
+
+自关联：
+	配置文件：
+		eg：	
+			<class name = NewsLabel>
+				<id name = "id">
+					<generater class = "navive"/>
+				</id>
+				<property name = "name"/>
+				<property name = "content"/>
+				<!--站在一方角度-->
+				<set name = childNewsLables cascade="save-update">
+					<key column = "pid"/>
+					<one-to-many class = "NewsLabel"/>
+				</set>
+				<!--站在多方角度-->
+				<many-to-one name = "parentNewsLabel" cascade = "save-update" class = "NewsLabel" colum="pid">
+			</class>
+
+多对多双向关联：
+	配置文件eg：
+		Course.hbm.xml:
+			<Class name = "Course">
+				<id name = "cid">
+					<generator class = "native"/>
+				</id>
+				<property name = "cname"/>
+				<!--关联属性映射-->
+				<set name = "students" cascade = "save-update" table = "middle">
+					<key column = "courseId">
+					<many-to-many class = "Student" column = "studentId">
+				</set>
+			</Class>
+		Student.hbm.xml:	
+			<Class name = "Student">
+				<id name = "cid">
+					<generator class = "native"/>
+				</id>
+				<property name = "sname"/>
+				<!--关联属性映射-->
+				<set name = "courses" cascade = "save-update" table = "middle">
+					<key column = "studentId"> <!--指定当前类在中间表中对应的外键-->
+					<many-to-many class = "Course" column = "courseId"> <!--指定关联类在中间表中对应的外键-->
+				</set>
+			</Class>
+
+左外连接的实现：
+	String hql =" select distinct c from Country c left join fetch c.ministers";
+	List<Country> coutrys = session.createQuery(hql).list();
+	
+当前对象检索优化：
+	get方式及时加载 ，load方式懒加载（真正用到的时候再加载），如果设置类的属性lazy=false，就不会懒加载
+
+多端加载优化：
+	1）fetch = "join":lazy属性失效，只会生成一条select语句，会将主表与从表进行迫切左外连接。
+	2）fetch = "select" lazy可以为false，true，extra。分别为不延时加载，延时加载，能用聚合就不详情查询的延时加载。
+
+单端加载优化：
+	lazy = "false" 直接加载
+	lazy = "proxy" 使用字节码代理，关联属性是否延迟加载，由该类的lazy值决定
+	
+	fetch = "join" 采用迫切左外连接查询
+	fetch = "select" 采用普通select查询
+	
+缓存：
+	事务范围缓存：单session缓存，只能被当前事务访问。
+	应用范围缓存：二级缓存，单sessionFactory缓存。可以被应用程序中的所有事务访问。 
+	
+一级缓存相关管理方法：
+	session.evict(Object o): 从Session中删除指定对象
+			clear():清空缓存
+			contains():判断指定对象是否在session缓存中
+			flush():将session中对象状态同步到DB中
+			
+快照机制：
+		默认情况下，事务提交时，会首先对比session缓存中数据与快照中的数据。若不一致，则说明数据发生更新，会将session缓存中数据通过update语句更新到DB中。
+		快照中数据也会更新，若一致，则说明数据未发生改变，无需做同步。
+		 
+二级缓存：
+	修改主配置文件hibernate.cfg.xml
+		<!--开启二级缓存-->
+		<property name= "hibernate.cache.use_second_l evel_cache">true</property>
+		<!--注册二级缓存区域工厂-->
+		<property name = "hibernate.cache.region.factory_class">org.hibernate.cache.ehacache.EhCacheRegionFactory</property>
+	
+		<!--指定类缓存-->
+		<class-cache usage = "read-only" class = "xxx.xxx.xxx.Minister"> 
+		<!--指定集合缓存，集合缓存缓存的是集合元素的id，不放详情-->
+		<collection-cache usage = "read-only" collection = "xxx.xxx.xxx.Country.ministers">
+
+Query的查询结果也会放到一二级缓存中，但query查询默认不会从缓存中读取数据。
+若需要让query从缓存中取数据，需设置session.createQuery(hql).setCacheable(true).uniqueResult();,且必须保证hql语句完全相同
+
+Query接口的executeUpdate()方法可以绕过一级缓存，但会修改二级缓存中缓存的对象的updateTimeStamp值。而从二级缓存中取数据，必须首先判断updateTimeStamp是否改变。
+因此调用了executeUpdate()后，必须通过新的查询来获取数据。
+	
+事务四大特性：
+	原子性:要么全部完成，要么均不执行。
+	一致性:几个并行执行的事务，其执行结果必须与按某一顺序串行执行的结果相一致。
+	隔离性:事务的执行不能受到其他事务的干扰。
+	持久性:对于任意已提交事务，系统必须保证该事务对数据库的改变不被丢失。
+
+写并发问题：
+	回滚丢失更新；
+	提交丢失更新；
+	解决方案：
+		乐观锁；
+		悲观锁；
+		
+注解：
+	基本注解：
+	@Entity
+	@Table(t_student)
+	public class Student{
+		@Id
+		@GeneratedValue(strategy=GenerationType.IDENTITY)
+		private Integer id;
+		@Basic    //表明当前属性被持久化到DB中，该注解为属性的默认注解
+		@Column(name="tname")
+		private String name;
+		@Transient //表明当前属性将不写入DB中
+		private Double score；
+	}
+	
+	使用Hibernate内置主键生成策略：
+		@Entity
+		@Table(t_student)
+		public class Student{
+		@Id
+		@GeneratedValue(generator="xxx")                   //使用自定义的主键生成器
+		@GenericGernerator(name="xxx",strategy="native")   //生成一个主键生成器
+		private Integer id;
+		private String name;
+		@Transient //表明当前属性将不写入DB中
+		private Double score；
+	}
+	
+	一对多双向关联：
+		@Entity
+		@Table
+		public class Country{
+			@Id
+			@GeneratedValue(strategy=GenerationType.IDENTITY)			
+			private Integer cid;
+			private String cname;
+			
+			@OneToMany(targetEntityMinister.class,cascade=CascadeType.ALL)
+			@JoinColumn(name="countryId")
+			private Set<Minister> ministers;
+		}
+		
+		@Entity
+		@Table
+		public class Minister{
+			@Id
+			@GeneratedValue(strategy=GenerationType.IDENTITY)			
+			private Integer mid;
+			private String mname;
+			
+			@ManyToOne(targetEntity=Country.class,cascade=CascadeType.ALL)
+			private Country country;
+		}
+		
+	自关联：
+		@Id
+		@GeneratedValue(strategy=GenerationType.IDENTITY)
+		private Integer id;
+		private String name;
+		private String content;
+		
+		@ManyToOne(cascade=CascadeType.ALL)
+		@JoinColumn(name="pid")
+		private NewsLabel parentNewsLabel;
+		
+		@OneToMany(cascade=CascadeType.ALL)
+		@JoinColumn(name="pid")
+		private NewsLabel parentNewsLabel;
+		
+	多对多：
+		
+		@ManyToMany(cascade = CascadeType.ALL)
+		private set<Courses> courses;
+		
+		@ManyToMany(cascade = CascadeType.ALL,mappedBy="courses") //一方放弃维护权
+		private set<Students> students;
+	

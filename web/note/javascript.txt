@@ -1,0 +1,84 @@
+js嵌入html代码中的方式：
+	1.事件驱动(onclick())
+	2.独立脚本块：
+		<script type = "text/javascript">
+		
+		</script>
+		
+	3.单独文件
+		<script type = "text/javascript" src = "1.js"> 
+		</script>
+		
+js数据类型：
+	Undefine
+	String
+	Number
+	Boolean
+	Object
+	
+=   赋值
+==  比较值是否相等
+=== 比较值是否相等且数据类型是否相同
+
+js中的类
+	js中自定义的函数，函数名本身也是类名
+	js中函数声明就表示定义了一个类，函数本身又是构造函数，函数声明和类的定义混合完成
+	
+	定义类的方式1：
+	function User(a,b){
+		//属性
+		this.id = a;
+		this.name = b;
+		//方法
+		this.shopping = function(){
+			alert(this.name )
+		}
+	}
+	
+	定义类的方式2：
+	User = function(a,b){
+		this.id = a;
+		this.name = b;
+	}
+	
+html中：
+	load是事件
+	onload 是事件句柄
+	
+	load事件什么时候发生？
+		当整个html页面全部加载完毕后，load事件发生。
+		
+	onload事件句柄需要编写到body标签中。
+	
+	<body onload="displayTime();">
+	
+	</body>
+	
+js中设置每隔特定事件执行一个函数
+	window.setInterval("displayTime()",1000);
+	
+html中：文本框失去焦点事件是：blur事件
+				      句柄是：onBlur() 
+		      获取焦点事件是：focus
+                      句柄是：onFocus	
+        <form onsubmit = "return true;">提交表单
+		<form onsubmit = "return false;">取消提交表单
+		
+js中如何使用正则表达式：
+	1.var regexp = /正则表达式/flag；
+	2.var regexp = new regexp("正则表达式"，"flag");
+	
+	flag: i:忽略大小写
+	      g:当前行所有数据
+		  m:支持多行搜索
+		  
+	正则表达式对象中有一个很重要的方法，叫test
+		regexp.test("字符串");
+		
+在js中全局变量和全局函数都是window对象的属性
+
+html中：
+	mouseover 鼠标经过
+	mouseout  鼠标离开
+
+					  

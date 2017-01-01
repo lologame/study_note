@@ -1,0 +1,54 @@
+JSP是什么？
+	- JavaServer Pages
+	- 基于java语言实现的服务器端页面
+	- JavaEE规范之一
+	
+JSP执行原理：
+	- 浏览器访问某个jsp文件，其实底层执行的是jsp对应的java程序
+	- TomCat服务器负责将.jsp文件翻译生成.java源文件，并且将java源文件编译shengcheng.class字节码文件。
+	- 访问jsp，其实底层还是执行了.class文件中的程序。
+	- Tomcat服务器内部内置了一个JSP翻译引擎，专门负责翻译JSP文件，编译java源文件
+	- index.jsp文件会被翻译生成index_jsp.java，编译生成index_jsp.class
+	- index_jsp这个类继承了HttpJspBase，而HttpJspBase继承了HttpServlet
+	- jsp就是Servlet，只不过职责不同，Jsp的强项是页面显示。
+	
+jsp文件修改后不需要重新部署。
+
+jsp文件第一次访问的时候为什么非常慢 ？
+	- 启动JSP翻译引擎
+	- 需要一个翻译的过程 
+	- 需要一个编译的过程
+	- init方法调用
+	- Service方法调用
+	
+	为什么第2+次访问JSP的时候非常快？
+		- 不需要重新翻译和编译
+		- 不需要创建Servlet对象，直接执行Service方法
+		
+语法：
+	<%! %>  定义成员变量和方法
+		eg：<%! 
+				int i = 10;
+				public  void method(){}
+			%>
+			
+	<% %>定义的代码，都会放到jsp_service方法中，作为局部变量使用
+	
+	<%-- --%> JSP注释
+	
+	<%=  %> 等号后面必须是字符串变量或者可以被转换成字符串的表达式
+	
+第一次访问jsp时会创建session。
+
+EL表达式
+	EL的内置对象：
+		pageScope
+		requestScope
+		sessionScope
+		applicationScope
+	如果不指定范围，它的搜索顺序为pageScope！applicationScope
+
+
+		
+
+		

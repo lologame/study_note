@@ -1,0 +1,7 @@
+target/
+.settings/
+*.classpath
+*.myumldata
+*.project
+classes/
+bin/
