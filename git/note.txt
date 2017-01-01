@@ -57,8 +57,14 @@
 添加远程仓库
 	git remote add [shortname] [url]
 	
-从远程仓库中获取数据，可以执行
-	git fetch [remote-name]
+从远程仓库中获取数据
+	git fetch [remote-name] [branch-name]
+	
+从远程仓库获取数据并合并
+	git pull [remote-name] [branch-name]
+	相当于：
+		git fetch [remote-name] [branch-name]
+		git pull [remote-name]/[branch-name]
 	
 推送数据到远程仓库
 	git push [remote-name] [branch-name]
