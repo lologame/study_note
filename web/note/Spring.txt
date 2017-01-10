@@ -529,8 +529,8 @@ AspectJ对AOP的实现
 	基于xml:
 		<aop:config>
 			<aop:pointcut expression = "execution(* *..service.*.doSome(..))" id="doSomePointcut">
-			<aop:pointcut expression = "execution(* *..service.*.doSome(..))" id="doSecondPointcut">
-			<aop:pointcut expression = "execution(* *..service.*.doSome(..))" id="doThirdPointcut">
+			<aop:pointcut expression = "execution(* *..service.*.doScond(..))" id="doSecondPointcut">
+			<aop:pointcut expression = "execution(* *..service.*.doThird(..))" id="doThirdPointcut">
 			<aop:aspect ref="myAspect">
 				<aop:before method="myBefore" pointcut-ref="doSomePointcut"/>
 				<aop:before method="myBefore(org.aspectj.lang.JoinPoint)" pointcut-ref="doSomePointcut"/>
@@ -540,6 +540,7 @@ AspectJ对AOP的实现
 				<aop:after-throwing method="myAfterThrowing" pointcut-ref="doSomePointcut"/>
 				<aop:after method="myAfter" pointcut-ref="doSomePointcut"/>
 			</aop:aspect>
+		</aop:config>
 	
 spring与JDBC模板
 	jar包：

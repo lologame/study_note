@@ -24,6 +24,24 @@
 	构造一个实现指定接口的代理类的实例。所有的方法都将调用代理对象的invoke方法。
 	
 异常：
+
+	异常分类：
+		1.受检查异常：编译时被强制要求检查，必须用try-catch代码块或抛出的异常。基类是Exception
+		2.不受检查的异常：在方法中未声明，在运行过程中发生的异常。基类是RuntimeException
+
+    结构：		
+										Throwable
+											|
+								|-----------------------|
+                              Error                 Exception
+                                                        |	
+                                        |---------------|------------------|
+                                   RuntimeException InterruptExcetion  IOException
+                                        |
+                              |-------------------|
+                    NullpointerException     ArrayIndexOutofBoundsException
+
+					
 	由程序导致的错误属于RuntimeException,而程序本身没有问题，由于I/O错误之类的问题导致的属于其他异常。
 	
 	什么时候需要在方法中用throw子句声明异常，什么异常必须使用throw子句进行声明：
