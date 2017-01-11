@@ -212,7 +212,55 @@ protected
 import ： 导入指定包中的类
 import static ： 导入类中的静态方法
 
-	
+java注解原理
+	java.lang.annotation提供四种元注解
+	@Ducumented －注解是否包含在JavaDoc中
+	@Retention －定义注解的生命周期
+	@Target －注解用于什么地方
+	@Inherited － 是否允许字类继承该注解
+
+	@Retention －定义注解的生命周期
+		RetentionPolicy.SOURCE : 在编译阶段丢弃。编译结束后就不会有意义
+		RetentionPolicy.CLASS: 在类加载的时候丢弃。（默认）
+		RetentionPolicy.RUNTIME:始终不丢弃
+	@Target －表示注解用于什么地方
+		ElementType.CONSTRUCTOR   构造器
+		ElementType.FIELD   成员属性
+		ElementType.LOCAL_VARIABLE 局部变量
+		ElementType.METHOD 方法
+		ElementType.PACKAGE
+		ElementType.PARAMETER 参数
+		ElementType.TYPE 类、接口、enum生命
+
+	Annotations只支持基本类型、String及枚举类型。注释中所有的属性被定义成方法，并允许提供默认值。
+	eg：
+		@Target（ElementType.METHOD）
+		@Retention(RetentionPolicy.RUNTIME)
+		@interface MyAnnotation{
+			public enum SomeEnum{A,B,C}
+			String somePropery() default “property”;
+			SomeEnum someEnum() default SomeEnum.A;
+		}
+
+
+	如果注解中只有一个属性，可以直接命名为“value”，使用时无需再标明属性名。
+
+	使用注解：
+	eg：
+		@MyAnnotation（someProperty ＝ “prop”，someEnum ＝ MyAnnotation.SomeEnum.B）
+		public void someMethod(){}
+
+	获取注解参数：
+		但凡Annotation起作用的场合都是有一个执行机制/调用者通过反射获得了这个元数据然后根据它采取行动。
+		eg：
+			  Method[] declaredMethods = SomeClass.class.getDeclaredMethods();
+	       	 	  for (Method method : declaredMethods) {
+	            		Annotation[]  methodAnnotations = method.getAnnotations();
+	            		Annotation[][] parameterAnnotationsArray = method.getParameterAnnotations();
+	        	  }	
+		获取指定的注解
+		eg：
+			MyAnnotation myAnnotation =method.getAnnotation(MyAnnotation.class);
 		
 	
 	
