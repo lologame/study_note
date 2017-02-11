@@ -1,0 +1,58 @@
+springMVC启动流程
+
+启动FrameworkServlet的init过程
+	
+	1.调用createWebApplicationContext创建一个WebApplicationContext
+		wac = createWebApplicationContext(rootContext);
+	2.调用configureAndRefreshWebApplicationContext(WebApplicationContext)方法初始化和更新Context
+		configureAndRefreshWebApplicationContext(wac);
+	3.调用AbstractApplicationContext.refresh()
+		wac.refresh();
+		
+	启动AbstractApplicationContext的refresh过程
+	
+		1.获取更新好的bean工厂
+			ConfigurableListableBeanFactory beanFactory = obtainFreshBeanFactory();
+			
+		在obtainFreshBeanFactory()中启动AbstractRefreshableApplicationContext的refreshBeanfacotry过程
+		
+			1.创建一个DefaultListableBeanFactory
+				DefaultListableBeanFactory beanFactory = createBeanFactory();
+			2.加载BeanDefinitions
+				loadBeanDefinitions(beanFactory);
+				
+			启动XmlWebApplicationContext的loadBeanDefinition(beanFactory)过程
+			
+				1.创建一个XmlBeanDefinitionReader，并将该beanFactory作为其registry
+				2.调用reader的loadBeanDefinition(ConfigLocation)方法
+									 .
+				                     .
+									 .
+													 
+				N.最终将所有的BeanDefinition放入BeanDefinitionReader的registry中的Map<String,Beandefinition>中，如果是xml中读到的bean，使用GenericBeanDefinition，
+				如果是通过注解扫描到的bean，使用ScannedGernericBeanDefinition。
+				
+			3.将AbstractRefreshableApplicationContext的beanFactory设置为之前创建的beanFactory
+			
+		2.调用registerBeanPostProcessors(beanFactory)注册所有的bean后处理器
+		
+		3.调用beanFactory.preInstantiateSingletons()实例化所有尚未实例化的bean
+		
+			基于AutoWired注解的检测在AutowiredAnnotationBeanPostProcessor中的
+				public void postProcessMergedBeanDefinition(RootBeanDefinition beanDefinition, Class<?> beanType, String beanName) 中实现
+			基于AutoWired注解的注入在AutowiredAnnotationBeanPostProcessor中的
+				public PropertyValues postProcessPropertyValues(
+						PropertyValues pvs, PropertyDescriptor[] pds, Object bean, String beanName) throws BeansException 中实现
+			
+			
+				
+		
+			
+		
+				
+				
+					
+					
+				
+				
+		

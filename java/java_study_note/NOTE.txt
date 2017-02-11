@@ -209,8 +209,6 @@ protected
 	clone方法的例子！！！
 	注意方法的提供者和调用者的关系！！！
 	
-import ： 导入指定包中的类
-import static ： 导入类中的静态方法
 
 java注解原理
 	java.lang.annotation提供四种元注解
@@ -263,7 +261,9 @@ java注解原理
 			MyAnnotation myAnnotation =method.getAnnotation(MyAnnotation.class);
 		
 	
-	
+java继承方法调用顺序：
+	如果b类继承自a类，在main方法中new出b的对象(不带参数)，那么他执行的顺序是：	
+		父类a的静态代码块-->类b的静态代码块-->父类a的非静态代码块-->父类a的无参构造函数-->子类b的非静态代码块-->子类b的无参构造函数	
 	
 	
 	
