@@ -151,6 +151,10 @@ HttpServletRequest接口
 		1、获取请求转发器对象
 		2、调用转发器对象的forward方法	
 		eg：request.getRequestDispatcher("/b").forward(request,response);
+		3、调用转发器对象的include方法
+		forward方法是把请求的内容转发到另外的一个servlet.而include是把另一个servlet处理过后的内容拿过来.
+		被调用的Servlet如果产生任何HTTP回应，将会并入原来的HttpResponse对象
+		比如在servlet1打一句out.print("1111"),servlet2打上out.print("22222"),在servlet1中用forward命令会转到servlet2中,显示22222.而在servlet1中使用include方法会依然在servlet1的页面中,但是在1111后打出22222
 		
 	ServletContext 应用范围：可以跨用户传递数据
 	ServletRequest 应用范围：只能在同一个请求中传递数据，但是可以跨多个同一个请求的Servlet
@@ -309,11 +313,22 @@ session
 		2、application完成跨会话共享数据
 		   session完成跨请求共享数据，但是这些请求必须在一个会话中
 		   request完成跨Servlet共享数据，但这些Servlet必须在同一个请求中
+		   
+ServletContextListener
+	ServletContextListener是对ServeltContext的一个监听.
+	servelt容器启动,serveltContextListener就会调用contextInitialized方法.在方法里面调用event.getServletContext()可以获取ServletContext.
+	servelt容器关闭,serveltContextListener就会调用contextDestroyed.
 		
-		
-		
-	
-		
+Filter
+	主要用于对HttpServletRequest 进行预处理，也可以对HttpServletResponse 进行后处理.
+	在HttpServletRequest 到达Servlet 之前，拦截客户的HttpServletRequest,根据需要检查HttpServletRequest ，也可以修改HttpServletRequest 头和数据。 
+	在HttpServletResponse 到达客户端之前，拦截HttpServletResponse,根据需要检查HttpServletResponse ，可以修改HttpServletResponse 头和数据。
+	init()：Init 方法在 Filter 生命周期中仅执行一次。
+	destory()：在Web容器卸载 Filter 对象之前被调用。
+	void doFilter(ServletRequest req, ServletResponse resp,  FilterChain chain)：FilterChain接口代表当前 Filter 链的对象。由容器实现，容器将其实例作为参数传入过滤器对象的doFilter()方法中
+
+servlet-name>default</servlet-name>
+	对客户端请求的静态资源如图片、JS文件等的请求交由默认的servlet进行处理
 	
 		
 

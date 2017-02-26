@@ -5,7 +5,7 @@
 ## Spring整体结构
 
 ![structure](./img/structure.png)
-## Springd的四种关键策略
+## Spring的四种关键策略
 
 - 基于POJO的轻量级和最小侵入性编程；
 
@@ -1000,9 +1000,13 @@ public String handleXxxNotFound(){
 
 在带有`@ControllerAdvice`注解的类中，以上所述的这些方法会运用到整个应用程序所有控制器中带有`@RequestMapping`注解的方法上。
 
-## 重定向
+## 过滤web请求
 
-使用路径变量和查询参数传递数据。
+* DelegatingFilterProxy
+
+  一个特殊的Servlet Filter。
+
+  负责将filter的工作委托给javax.servlet.Filter实现类，这个实现类作为一个<bean>注册在Spring应用的上下文中。
 
 
 

@@ -1,0 +1,100 @@
+简介
+	发布-订阅消息系统
+	高吞吐量
+	可持久化
+	分布式
+	消息被处理的状态是在consumer端维护
+
+基本架构
+	生产者发布一个消息到kafka的一个主题，这个主题即是由扮演KafkaServer角色的broker
+	提供，消费者订阅这个主题，然后从中获取消息。
+	
+Kafka解决查询效率
+	将数据文件分段
+	为分段后的数据建立索引
+	稀疏存储，每隔一定字节的数据建立一条索引
+	
+消息队列分类
+	点对点：
+		生产者生产消息发送到queue中，消费者从queue中取出并消费
+		
+	发布/订阅：
+		生产者将消息发布到topic中，多个消费者订阅该消息。
+		
+基本概念：
+	Topic： Kafka处理的消息源的不同分类
+	Partition：Topic物理上的分组，一个topic可以分为多个partition，每个partition是一个有序的
+	           队列。partition中的每条消息都会被分配一个有序的id。
+	Message:通信基本单位
+	Producers
+	Consumers
+	Broker
+	
+Producer:
+	负责将消息发送到指定的Topic，同时决定消息归属于哪个partition
+
+ Broker：
+	缓存代理。
+	负责数据持久化。通过将消息暂时buffer起来减少磁盘IO调用次数。
+	无状态机制：
+		1.无副本
+		2.不保存订阅者的状态，订阅者自己保存。
+		3. kafka采用消息过时自动删除的方式(默认7天)
+
+消费者
+	 kafka的Consumer group：
+		允许consumer group对一个topic进行消费，不同的consumer group之间独立订阅。
+	    为了减小一个consumer group中不同consumer之间的分布式协调开销，指定partition为最小的并行消费单位，即一个group内的consumer只能消费不同的partition
+		
+Topics/Log
+	每个partition在存储层面是append log文件，任何发布到这个partition的数据都会增加到append log文件的尾部。partition中的消息都会分配一个id(offset)
+	
+partitions
+	kafka基于文件存储。
+	通过分区，将日志文件分散到多个server，避免文件尺寸达到单机磁盘的上限。每个partition会被当前server保存。
+	越多的partitions意味着可以容纳更多的consumer，有效提升并发消费的能力。
+	
+Message
+	以topic为基本单位组织。
+	每个partition存储部分Message
+	Message包含三个属性：
+		1.offset
+		2.MessageSize(前面Message的size和)
+		3.data 
+		
+消息处理机制
+	1.消息顺序追加到日志
+	2.消费消息的顺序和日志中消息顺序一致
+	3.如果Topic的"replication factor"为N，那么允许N-1个kafka实例失效
+	4.提供至少发送一次机制
+	5.保证每个partition内的消息会被有顺序的订阅
+	6.为每条消息提供CRC校验
+	7.消费者消费成功，返回ack信息
+	
+设计原理
+	1.以topic进行消息管理。
+	2.每个topic包含多个partition。每个partition对一个一个log，每个log对应多个segment
+	3.每个segment存储多条消息，消息id由其逻辑位置决定，即从消息id可直接定位到消息的存储位置
+	4.每个part在内存中对应一个index，记录每个segment中第一条消息偏移。
+	5.当某个segment上的消息条数达到配置或消息发布时间超过阈值，segment上的消息会被flush到磁盘，只有flush到磁盘的消息才能被订阅，segment达到一定的大小后将不会再往该segment写数据，broker会
+	  创建新的segment。
+	  
+sendfile
+	传统网络传输：
+		1、调用read函数，文件数据被copy到内核缓冲区 
+		2、read函数返回，文件数据从内核缓冲区copy到用户缓冲区 
+		3、write函数调用，将文件数据从用户缓冲区copy到内核与socket相关的缓冲区。 
+		4、数据从socket缓冲区copy到相关协议引擎。 
+     sendfile
+		1、sendfile系统调用，文件数据被copy至内核缓冲区 
+		2、将记录数据位置和长度相关的数据保存到socket相关的缓存，而实际数据将由DMA模块直接发送到协议引擎
+		
+
+	
+	
+	
+	
+
+	 
+		
+	

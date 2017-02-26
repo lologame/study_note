@@ -156,6 +156,7 @@ public class MyLinkedList<T> implements Iterable<T>{
 			if(!hasNext()) throw new NoSuchElementException();
 			T data = currentNode.getData();
 			currentNode = currentNode.getNextNode();
+			okToRemove = true;
 			return data;
 		}
 

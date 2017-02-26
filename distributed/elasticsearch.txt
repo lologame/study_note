@@ -1,0 +1,55 @@
+概念
+	基于lucene的实时分布式搜索引擎
+
+ put和post
+	put用于更新，post用于新增
+	put只 能作用在具体资源上(/articles/123),post可以作用在资源集合上(/articles)
+	
+curl 
+	创建索引库 curl -XPUT 'http://localhost:9200/index_name/'
+	创建索引：curl -XPOST http://localhost:9200/crxy/employee/1 -d '{
+				"first_name" : "John",
+				"last_name" : "Smith",
+				"age" : 25,
+				"about" : "I love to go rock climbing",
+				"interests": [ "sports", "music" ]
+				}'
+
+	查询所有 curl -XGET [es实例]/[索引库]/[索引]/[id] _search
+	条件查询 curl -XGET http://localhost:9200/crxy/employee/_search?q=last_name:Smith
+	_met 查询多个  curl -XGET http://localhost:9200/crxy/emp/_mget?pretty -d '{"docs":[{"_id":1},{"_type":"blog","_id":2}]}'
+				   curl -XGET http://localhost:9200/crxy/emp/_mget?pretty -d '{"ids":["1","2"]}'
+	局部更新(必须使用POST)：curl -XPOST http://localhost:9200/crxy/emp/1/_update -d '{"doc":{"city":"beijing","car":"BMW"}}'
+	删除 curl -XDELETE http://localhost:9200/crxy/emp/4/   找到资源返回200 ， 没找到返回404
+	条件删除：curl -XDELETE 'http://localhost:9200/crxy/emp/_query?q=user:kimchy'
+	删除多种类型 curl -XDELETE 'http://localhost:9200/crxy/emp,user/_query?q=user:kimchy'
+	删除所有索引库中的匹配的数据：curl -XDELETE 'http://localhost:9200/_all/_query?q=tag:wow'
+
+版本控制
+	乐观并发控制(基础数据在读取和写入的间隔中发生了变化，会导致更新失败，由程序来决定如何处理这个冲突)，es使用版本号实现，默认使用内部版本号。
+	传统数据库使用悲观控制(确保只有读取到数据的线程才能修改)
+	
+	
+核心概念
+	cluster
+		一个主节点，通过选举产生
+		对于集群外部来说，没有主节点
+		主节点负责管理集群状态，包括管理分片的状态和副本的状态，以及节点的发现和删除。
+		在同一个网段启动多个es节点，就可以自动组成集群。
+	shards
+		es把完整的索引分成多个切片，分不到不同节点上，构成分布式搜索。分片数量在索引创建前指定。
+		可以在创建索引库时指定。
+		默认5个分片		
+	副本
+		提高容错率；提高查询效率。默认一个副本
+	recovery
+		es在由节点加入或者退出时会根据机器的负载对索引分片重新分配。
+	gateway
+		es持久化存储方式。
+		默认先内存，内存满了再持久化到硬盘，es集群关闭再重新启动时就会从gateway中读取索引数据。
+	discovery.zen
+		代表es的自动发现节点机制
+		通过广播寻找存在的节点
+	Transport
+		代表集群与客户端和内部节点的交互方式，默认tcp
+		

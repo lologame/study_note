@@ -94,6 +94,9 @@
 		如果既想读，又想写，不使用通配符
 	
 集合：
+
+	为速度而散列。
+	
 	集合类的基本接口是Collection接口，这个接口有两个基本方法：
 		public interface Collection<E>
 		{
@@ -111,17 +114,58 @@
 		
 	具体的集合：
 		ArrayList
+			基于数组实现
 		LinkedList
-		ArrayDeque
+			基于链表实现
+			    private static class Node<E> {
+					E item;
+					Node<E> next;
+					Node<E> prev;
+
+					Node(Node<E> prev, E element, Node<E> next) {
+						this.item = element;
+						this.next = next;
+						this.prev = prev;
+				}
+				LinkedList中有一个modifyCount，链表的每次修改都会导致modifyCount++；
+				LinkedList$ListIterator中有个expectedModifyCount，在实例化ListIterator时会初始化为modifyCount，
+				通过ListIterator的每次对链表的修改都会导致expectoedModifyCount++；
+				通过判断expectedModifyCount是否等于modifyCount判断是否会出现ConCurrentModificationException();
+		ArrayDeque(使用循环数组实现的双端队列)
+			通过head和tail的循环加减实现循环位移
+			addFirst：head = （head - 1） & （length - 1）;
+			addLast:  tail = (tail + 1) & （length - 1）;
+			获取大于设定容量的最小的2的幂次方数：
+				initialCapacity |= (initialCapacity >>>  1);
+				initialCapacity |= (initialCapacity >>>  2);
+				initialCapacity |= (initialCapacity >>>  4);
+				initialCapacity |= (initialCapacity >>>  8);
+				initialCapacity |= (initialCapacity >>> 16);
+				initialCapacity++;
+				
 		HashSet
+			HashSet基于HashMap实现
+			HashSet内有一个HashMap，设为map
+			当调用HashSet的add(e)方法，实际上就是调用map.put(e,obj)
 		TreeSet
+			有序集合
 		EnumSet
+			包含枚举类型值的集合
 		LinkedHashSet
+			可以记录键值插入顺序的集合
 		PriorityQueue
+			允许高效删除最小元素的集合
 		HashMap
+			HashMap中存放了一个Node数组，设该数组为table，该Node数组的交标对应着key的hash值。
+			Node实现了entry这个接口。并且Node中存放着nextNode的引用。
+			当调用HashMap的get(key)方法时，会去找table[hash(key)]，设node = table[hash(key)];若node.key == key,则返回node.value,否则从node.next继续找
 		TreeMap
+			键值有序排列的映射表，采用红黑树实现
 		EnumMap
+			键值属于枚举类型的映射表
 		LinkedHashMap
+			可以记住键/值添加顺序的映射表
+			通过将插入项并入到一个双向链表中实现
 		WeakHashMap
 		IdentityHashMap
 		
@@ -147,6 +191,7 @@
 LinkedList   ArrayList
 		
 	通过使用视图可以获得其他的实现了集合接口和映射表接口的对象。
+		
 	
 多线程：
 	锁：
@@ -276,6 +321,17 @@ java继承方法调用顺序：
 	JRE下的lib只是运行java程序的jar包，是为JVM运行时候用的。包括所有的标准类库，和扩展类。  
 	JDK下的JRE下的lib是开发环境中，运行时需要的jar包。
 	
+关于静态内部类和非静态内部类
+	静态内部类没有了指向外部的引用。
+	非静态内部类中不可以声明静态成员。
+	不能够从静态内部类的对象中访问外部类的非静态成员。
 	
+String
+	String str1 = new String("abc");
+	String str2 = "abc";
+	第一种是用new()来新建对象的，它会在存放于堆中。每调用一次就会创建一个新的对象。运行时期创建。
+	第二种是先在栈中创建一个对String类的对象引用变量str2，然后通过符号引用去字符串常量池里找有没有"abc",如果没有，则将"abc"存放进字符串常量池，并令str2指向”abc”，
+	如果已经有”abc” 则直接令str2指向“abc”。编译期间完成。
+		
 	
 	

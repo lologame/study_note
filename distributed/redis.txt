@@ -1,0 +1,235 @@
+redis的值支 持的数据类型：
+	String
+	hash
+	list<String>
+	set<String>
+	sorted set
+	HyperLogLog
+
+特点
+	高性能
+	原子性
+	持久存储
+	主从结构
+	集群
+	
+安装c编译环境
+	yum -y install cpp
+	yum -y install binutils
+	yun -y install glibc
+	yun -y install glibc-kernheaders
+	yun -y install glibc-commin
+	yun -y install glibc-devel
+	yun -y install gcc
+	yun -y install make
+	
+redis默认16个数据库 (0~15)
+
+基础命令
+	keys [键名正则表达式]   获得所有符合规则的键的名称
+	exists [key名]  判断键是否存在
+	del [key名1] [key名2] ...   删除键
+	type [key名]  返回键的类型
+	
+帮助命令
+	help @[类型]  返回对应类型的命令
+	
+String数据类型
+	set [key] [string]
+	get [key]
+	mset [key1] [string1] [key2] [string2] ...
+	mget [key1] [string1] [key2] [string2] ...
+	setnx [key] [int] (键不存在才赋值) 
+	incr [key]  (递增1，必须保证该值是数字类型)
+	desc [key]  (递减1)
+	incrby [key] [int] (递增int)
+	descby [key] [int]
+	incrbyfloat [key] [float] (递增float)
+	append [key] [str] (返回字符串长度)
+	strlen [key] (返回字符串长度)
+	
+hash数据类型
+	存储了字段和字段值得映射
+	字段值只能是字符串
+	
+	hset [key] [saved_key] [saved_value]
+	hget [key] [saved_key]
+	hmset [key] [saved_key_1] [saved_value_1] [saved_key_2] [saved_value_2] ...
+	hmget [key] [saved_key_1] [saved_key_2]
+	hsetnx [key] [saved_key_1] [saved_value_1] 
+	hexists [key] [saved_key_1]
+	hincrby [key] [saved_key_1] [int]
+	hdel [key] [saved_key_1]
+	hkeys [key]
+	hvalues [key]
+	
+list
+	双向链表
+	lpush [list_name] [value1] [value2] ...  (从前插)
+	rpush [list_name] [value1] [value2] ...  (从后插)
+	lpop [list_name]   
+	rpop [list_name]
+	llen [list_name]
+	lrange [list_name] [start_index] [end_index] (返回范围内的元素)
+	lrem [list_name] [count] [value] 
+		count>0:从表头开始向表尾搜索，移除与value相等的元素，数量为count
+		count<0:从表尾开始向表尾搜索，移除与value相等的元素，数量为count的绝对值
+		count=0：移除表中所有与value相等的元素
+	lindex [listname] [index]
+	lset [listname] [index]
+	ltrim [listname] [start_index] [end_index] (截取)
+	linsert [listname] before [element] [value] (指定元素前面插入元素)
+	rpoplpush [list_1] [list_2] 将list_1的右侧取一个元素插到list_2的左侧
+	
+set
+	sadd [set] [value]
+	smembers [set] 显示所有元素
+	srem [set] [value1] [value2] ... 删除元素
+	sismember [set] [value] 判断是否有这个元素
+	sdiff [set1] [set2] 返回set1中有set2中没有的元素
+	sinter [set1] [set2] 交集
+	sunion [set1] [set2] 并集
+	sunionstore [set] [set1] [set2] 将并集返回到set
+	scard [set] 计算元素个数
+	spop [set] 随机推出一个元素
+	srandmember set1 [num] 随机取num个元素
+	
+sorted set
+	集合的基础上为集合中的每个元素都添加了一个分数
+	采用散列表和跳跃表实现，可以改变元素的位置。
+	zadd [zset] [score] [value]
+	zscore [zset] [value] 获取分值
+	zadd [zset] [score] [value] 增加分数
+	zrange [zset] [start_index] [end_index] 从低到高
+	zrevrange [zet] [start_index] [end_index] 从高到低
+	zrangebyscore [zset] [score_1] [score_2] 返回>=score <=score ，如果有( 开区间
+	zincrby [zset] [increment] [value] 递增increment个分值
+	zcard [zset] 获取元素个数
+	zcount [zset] [from_score] [to_score] 统计指定分数范围内元素个数 ；(表示开区间
+	zrem [zset] [value] 删除指定元素
+	zremrangebyrank [zset] [from_index] [to_index] 删除角标范围内的元素
+	zremrangebyscore [zset] [from_score] [to_score] 删除指定分数范围内的元素
+	+inf 正无穷 -inf 负无穷
+	分值重复按照字典顺序排序
+	
+键的生存时间	
+	expire [key] [s] 设置键的生存时间
+	pexpire [key] [ms]
+	ttl [key] 返回-1  永久生存； 返回-2 ：不存在；  其他 ：s
+	persist [key] 取消生存时间
+	
+redis事务
+	multi 开启事务
+	exec  执行事务
+	watch：
+		 监控一个或多个键，当被监控的键值被修改后阻止之后的一个事务执行。
+		 执行完exec之后，键的监控状态就被取消掉了
+	unwatch 	
+		取消监控
+		
+sort 排序
+
+优先级队列
+	brpop [key1] [key2] ... [timeout]
+	
+管道
+	客户端和redis服务器只交互两次
+	Pipeline pipeline = jedis.pipelined();
+	pipline.set("k","v");
+	....
+	List<Object> syncAndReturnALl = pipline.syncAndReturnAll();
+	pipeline.close();
+	
+持久化
+	RDB(快照方式)
+		存储在dump.rdb文件中
+		过程：
+			1.复制当前进程的副本(子进程)
+			2.父进程继续接受并处理客户端的命令
+			3.当子进程写入完所有数据后会用该临时文件替换旧的RDB文件，至此，一次快照操作完成。
+		会丢失最后一次快照以后更改的数据
+		
+	AOF(日志方式)
+		记录数据库的更改操作至appendonly.aof
+		默认每秒记录一次	
+		可以更改为总是执行
+		程序优先执行aof来恢复数据
+		aof文件会定时重写
+
+安全
+	requirepass 设置密码
+	auth        验证密码
+	bind        只能在指定ip下访问
+	
+info
+	返回服务器的信息
+	
+monitor
+	监控
+	
+config
+	config set 动态设置参数信息
+	config get 查看参数
+	config rewrite 将配置信息写入conf
+	
+优化
+	精简键名和键值，减少内存消耗
+	业务场景不需要持久化时，关闭持久化
+	
+	
+主从同步
+	主数据库支持读写操作，从数据库只读。
+	主从同步过程：
+		1.从数据库启动后向主数据库发送同步命令
+		2.主数据库收到命令执行保存快照
+		3.主数据库将快照文件发给从数据库
+		4.从数据库载入快照
+	配置min-slave-to-write设置至少需要多少个slave才能让主节点执行写操作
+		
+Sentinel
+	redis的sentinel系统用于管理多个redis服务器，该系统主要执行三个任务
+	1.监控；2.提醒；3.自动故障转移
+	主观下线；客观下线
+	配置sentinel
+		修改sentinel.conf  sentinel monitor mymaster [ip] [num]
+	启动sentinel的两种方式
+		redis-sentinel sentinel.conf
+		redis-server sentinel.conf --sentinel
+	命令 必须redis-cli -p 26379 才能启动
+	INFO
+		sentinel的基本状态信息
+	SENTINEL_masters
+		列出所有被监视的服务器，以及服务器的当前状态
+	SENTINEL slaves <master name>
+		列出所有给定主服务器的从服务器
+	SENTINEL get-master-addr-by-name <master_name>
+	
+	java代码：
+		Set<String> sentinels = new HashSet<String>();
+		sentinels.add("192.168.67.101:26379");
+		sentinels.add("192.168.67.102:26379");
+		
+		JedisPoolConfig poolConfig = new JedisPoolConifg();
+		
+		JedisSentinelPool jedisSentinePool = new JedisSentinelPool("mymaster",sentinels,poolConfig);
+		Jedis resource = pool.getResource();
+		pool.returnResourceObject(resource);
+	
+redis 集群
+	16384个hash槽
+	每个节点负责一部分槽
+	假设有ABC三个节点：
+		添加节点D：把节点D添加到集群，同时将ABC的槽移一部分给D
+		删除节点：转移槽，移除
+	集群中的每个主节点至少要有一个从节点
+	java代码：
+		Set<HostAndPort> nodes = new HashSet<HostAndPort>();
+		//添加集群中的一个节点即可
+		nodes.add(new HostAndPort("192.168.67.101",7000));
+		
+		JedisPoolConfig poolConfig = new JedisPoolConfig();
+		
+		JedisCluster jedisCluster = new JedisCluster(nodes,poolConfig);
+		String string = jedisCluster.get("key");
+		
+	
