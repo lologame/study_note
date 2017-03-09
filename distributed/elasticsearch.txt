@@ -53,3 +53,52 @@ curl
 	Transport
 		代表集群与客户端和内部节点的交互方式，默认tcp
 		
+SearchType
+	QUERY_THEN_FETCH:每个分片查，查了返回再排序
+	QUERY_AND_FETCH:每个分片查了直接返回，返回N倍
+	DFS_QUERY_THEN_FETCH：先做初始化散发。初始化散发其实就是在进行真正的查询之前，先把各个分片的词频率和文档频率收集一下，然后进行词搜索的时候，各分片依据全局的词频率和文档频率进行搜索和排名。显然如果使用DFS_QUERY_THEN_FETCH这种查询方式，效率是最低的，因为一个搜索，可能要请求3次分片。但，使用DFS方法，搜索精度应该是最高的。
+	DFS_QUERY_AND_FETCH
+	
+Mapping,就是对索引库中索引的字段名称及其数据类型进行定义,类似于关系数据库中表建立时要定义字段名及其数据类型那样
+settings可以修改索引库默认配置
+	curl -XPUT 'localhost:9200/crxy1' -d'{"mappings":{"emp":{"properties":{"name":{"type":"string","indexAnalyzer": "ik","searchAnalyzer": "ik"}}}}}'
+	curl -XPUT 'localhost:9200/crxy/' -d'{"settings":{"number_of_shards":3,"number_of_replicas":2}}'
+	
+分片查询
+	默认是randomize across shards
+	随机选取，表示随机的从分片中取数据
+	_local：指查询操作会优先在本地节点有的分片中查询，没有的话再在其它节点查询。
+	_primary：指查询只在主分片中查询
+	_primary_first：指查询会先在主分片中查询，如果主分片找不到（挂了），就会在副本中查询。
+	_only_node：指在指定id的节点里面进行查询，如果该节点只有要dx查询索引的部分分片，就只在这部分分片中查找，所以查询结果可能不完整。如_only_node:123在节点id为123的节点中查询。
+	_prefer_node:nodeid 优先在指定的节点上执行查询
+	_shards:0 ,1,2,3,4：查询指定分片的数据
+	自定义：_only_nodes：根据多个节点进行查询
+
+	
+脑裂
+	是同一个集群中的不同节点，对于集群的状态有了不一样的理解。
+	
+	可能导致的原因：
+	1. 网络：由于是内网通信，网络通信问题造成某些节点认为master死掉，而另选master的可能性较小；
+	2. 节点负载：由于master节点与data节点都是混合在一起的，所以当工作节点的负载较大（确实也较大）时，导致对应的ES实例停止响应，而这台服务器如果正充当着master节点
+	的身份，那么一部分节点就会认为这个master节点失效了，故重新选举新的节点，这时就出现了脑裂；同时由于data节点上ES进程占用的内存较大，较大规模的内存回收操作也能造
+	成ES进程失去响应。所以，这个原因的可能性应该是最大的。
+	
+	解决办法：
+		1.
+			node.master: true  
+			node.data: false 
+		2.discovery.zen.ping_timeout（默认值是3秒）：默认情况下，一个节点会认为，如果master节点在3秒之内没有应答，那么这个节点就是死掉了，而增加这个值，会增加节点等待响应的时间，从一定程度上会减少误判。
+        3.discovery.zen.minimum_master_nodes（默认是1）：这个参数控制的是，一个节点需要看到的具有master节点资格的最小数量，然后才能在集群中做操作。官方的推荐值是(N/2)+1，其中N是具有master资格的节点的数量
+
+es优化：
+	调大最大打开文件数：提升查询速率
+	修改配置文件调整ES占用JVM的内存：将ES_MIN_MEM和ES_MAX_MEM设置为一样放置频繁的你内存交换。设置mlockall来锁定进程的物理内存地址来放置内存交换。
+	
+	
+分片规则
+	elasticsearch在建立索引时，根据id或id，类型进行hash，得到hash值与该索引的分片数量取余，取余的值即为存入的分片。
+
+
+		

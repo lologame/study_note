@@ -194,15 +194,61 @@ LinkedList   ArrayList
 		
 	
 多线程：
+
+	线程状态：
+		new
+		Runnable
+		Blocked：一个线程试图获取一个内部的对象锁，该锁被其他线程持有
+		Waiting：等待通知
+		Timed Waiting:等待超时或通知
+		Terminated
+		
+	线程优先级：java中设置为10个。依赖于OS，Linux中线程的优先级被忽略。
+	
+	Run方法不能抛出受查异常。非受查异常会导致线程终止。该处理器必须实现Thread.UncaughtExceptionHandler接口。这个接口需要实现：
+	void uncaughtException(Thread t,Throwable e)
+	可以使用setUncaughtExceptionHandler或Thread类的静态方法setDefaultUncaughtExceptionHandler为所有线程安装一个默认的处理器。
+	
+	条件对象：
+		Lock lock = new ReetrantLock();
+		Condition condition = lock.newCondition();//返回一个与锁相关的条件对象。
+		condition.await();//将该线程放入等待集
+		condition.signalAll();解除该条件等待集中的所有线程的阻塞状态
+		condition.signal();从该条件的等待集中随机选择一个线程解除等待。
+		
 	锁：
+		锁是可重入的，因为线程可以重复获得已经持有的锁，锁保持一个持有计数来跟踪对lock方法的嵌套调用。
 		锁用来保护代码片段，任何时刻只能有一个线程执行被保护的代码。
 		锁可以管理试图进入被保护代码段的线程。
 		锁可以拥有一个或多个相关的条件对象。
 		每个条件对象管理那些已经进入被保护的代码段但还不能运行的线程。
 		
-	每个对象有一个内部锁，并且该锁有一个内部条件。由锁来管理那些试图进入synchronized方法的线程，由条件来管理那些调用wait的线程。
-	
-	Volatile域：如果声明一个域是volatile，那么编译器和虚拟机就知道该域是可能被另一个线程并发更新的。
+		每个对象有一个内部锁，并且该锁有一个内部条件。由锁来管理那些试图进入synchronized方法的线程，由条件来管理那些调用wait的线程。
+		
+		当访问共享变量时，为什么要求所有线程有同一个锁进行同步：
+			1.保证一个线程的写对其他线程可见；
+			2.保证一个线程读到的数据不是过期的。
+		
+		如果一个方法用synchronized关键字声明，那么对象的锁将保护整个方法。
+		wait方法添加一个线程到等待集中。notifyAll／notify方法解除等待线程的阻塞状态。
+		锁的局限性：1.单一条件；2.不能中断正在试图获得锁的线程；3.不能设定超时
+
+		同步阻塞：
+			synchronized（obj）｛
+			
+			｝
+
+	volatile
+		当对非volatile变量进行读写的时候，每个线程先从内存拷贝变量到CPU缓存中。如果计算机有多个CPU，每个线程可能在不同的CPU上被处理，这意味着每个线程可以拷贝到不同的CPU cache中。
+		而声明变量是volatile的，JVM保证了每次读变量都从内存中读，跳过CPU cache这一步。
+		
+		在访问volatile变量时不会执行加锁操作，因此也就不会使执行线程阻塞，因此volatile变量是一种比sychronized关键字更轻量级的同步机制
+			
+		加锁可以保证可见性与原子性，volatile只保证原子性；
+
+	最低限度安全性：
+		一个现在读取到的变量至少确定是某个线程设定的真实值。
+		最低限度安全性应用于除了64位数值变量(double,long)以外的所有变量，JVM允许将64位的读或写划分为两个32位的操作。除非使用volatile或者锁。
 	
 	线程局部变量：
 		以类A的对象为例，要为每一个线程构造一个A的实例，可以使用如下代码：
@@ -213,7 +259,110 @@ LinkedList   ArrayList
 		}
 		要访问a的具体方法，可以调用： a.get().mothod();
 		在调用get()方法时，就会调用initialValue方法，返回属于当前线程的实例。
-
+		
+		ThreadLocal通常用于防止在基于可变的单体或全局变量的设计中出现不正确的共享。它为每个使用它的线程维护一份单独的拷贝。
+		
+	tryLock
+		boolean tryLock() 尝试获得锁而没有发生阻塞；如果成功返回真。这个方法会抢夺可用的锁，即使该锁有公平加锁策略，即便其他线程已经等待很久也是如此。
+		boolean tryLock(long time,TimeUnit unit) 尝试获得锁，阻塞时间不会超过给定的值，线程在获得锁期间被中断将抛出InterruptedException异常。
+		lockInterruptibly(): 获得锁，但是会不确定地发生阻塞。相当于超时无限的tryLock
+		
+	stop和suspend的问题
+		stop终止线程时，容易导致对象状态被破坏，调用stop的线程无法知道什么时候调用stop是安全的。现在使用在希望停止线程的时候应该中断线程，被中断的线程会在安全的时候停止。
+		suspend的问题是在如果用suspend挂起一个持有锁的线程，就会出问题。
+		
+	阻塞队列：
+		blokingQueue
+			add element remove会抛出异常
+			offer peek poll 不会抛出异常
+			take remove 会阻塞
+		ArrayBlockingQueue(int capacity , boolean fair) 构造一个带有指定容量和公平性设置的阻塞队列，使用循环数组实现
+		LinkedBlockingQueue() 无上限的阻塞队列或双向队列，使用链表实现
+		LinkedBlockingQueue(int capacity) 根据指定容量构建有限的阻塞队列或双向队列，使用链表实现
+		DelayQueue 只有延迟已经超时的元素可以从队列中移出，元素必须实现Delayed接口。
+		PriorityBlockingQueue
+		
+	线程安全的集合：
+	
+	Callable<V>
+		call() 运行一个将产生结果的任务
+	Future<V>  保存异步计算的结果 
+		V get()
+		V get(long time,TimeUnit unit)
+			获取结果
+		boolean cancle(boolean mayInterrupt) 尝试取消任务的执行，如果mayInterrupt为true，它就会被中断。取消成功，返回true。
+		boolean isCancelled()
+		boolean isDone
+	FutureTask<V>
+		FutureTask(Callable task) 
+		FutureTask(Runnable task，V result) 
+			返回一个即使Future又是Runnable的对象
+		
+	执行器
+		什么时候使用线程池：
+			创建了大量的生命期很短的线程
+			减少并发线程的数目
+		
+		Excutors
+			静态方法
+			Executors.newCachedAThreadPool() 必要时创建新线程，空闲线程被保留60s
+			Executors.newFixedThreadPool(int num)   包含固定线程数
+			Executors.newSingleAThreadPool()   单线程
+		ExcutorService
+			Future<T> submit(Callable<T> task)
+			Future<T> submit(Runnable task , T result)
+			Future<?> submit(Runnable task)
+				提交任务
+			void shutdown()
+		ScheduledExcutorService
+			ScheduleFuture<V> schedule(Callable<V> task, long time, TimeUnit unit)
+			ScheduleFuture<?> schedule(Runnable<V> task, long time, TimeUnit unit)
+			预定在指定的时间之后执行	
+			ScheduledFuture<V>  scheduledAtFixedRate(Runable task, long initialDelay , long period ,TimeUnit unit)
+			预定在初始延时后周期性的执行
+		ExcutorService
+			T invokeAny(Collection<Callable<T>> tasks)
+			T invokeAny(Collection<Callable<T>> tasks,long timeout,TimeUnit unit)
+			执行给定的任务，返回其中一个任务的结果
+			List<Future<T>> invokeAll(Collection<Callable<T>> tasks)
+			List<Future<T>> invokeAll(Collection<Callable<T>> tasks,long timeout ,TimeUnit unit)
+			
+	Fork-Join框架
+		Fork/Join框架是是一个把大任务分割成若干个小任务，最终汇总每个小任务结果后得到大任务结果的框架。Fork指切分，Join指合并。
+		
+		工作窃取（work-stealing）算法是指某个线程从其他队列里窃取任务来执行。为了减少窃取任务线程和被窃取任务线程之间的竞争，
+								 通常会使用双端队列，被窃取任务线程永远从双端队列的头部拿任务执行，而窃取任务的线程永远从双
+								 端队列的尾部拿任务执行。
+								 
+		Fork/Join框架提供了以下两个子类：
+			RecursiveAction：用于没有返回结果的任务。
+			RecursiveTask ：用于有返回结果的任务。		
+			
+		ForkJoinPool ：ForkJoinTask需要通过ForkJoinPool来执行，任务分割出的子任务会添加到当前工作线程所维护的双端队列中，进入队列的头部。当一个工
+						作线程的队列里暂时没有任务时，它会随机从其他工作线程的队列的尾部获取一个任务。
+						
+	    ForkJoinTask与一般的任务的主要区别在于它需要实现compute方法，在这个方法里，首先需要判断任务是否足够小，如果足够小就直接执行任务。
+		            如果不足够小，就必须分割成两个子任务，每个子任务在调用fork方法时，又会进入compute方法，看看当前子任务是否需要继续分
+					割成孙任务，如果不需要继续分割，则执行当前子任务并返回结果。使用join方法会等待子任务执行完并得到其结果。
+					
+	逸出：
+		在对象初始化没完毕前就发布。
+		在构造函数中创建内部类实例会隐式的发布对象。可以使用工厂方法放置this引用在构造期间逸出。
+		
+	安全发布：
+		为了安全发布，对象的引用以及对象的状态必须同时对其他线程可见。
+		条件：
+			1.通过静态初始化器初始化对象的引用。
+			2.将它的引用存储到volatile域或者AtomicReferece
+			3.将它的引用存储到正确创建的对象的final域中
+			4.将它的引用存储到由锁正确保护的域中。
+		并发程序中，使用和共享对象的有校策略如下：
+			1.线程限制，让对象被线程独占，只有被占有他的线程修改。
+			2.共享只读。任何线程都不能修改。
+			3.共享线程安全：一个线程安全的对象在内部进行同步，所以其他线程无须额外同步，可以通过公共接口随意访问。
+			4.被守护的对象：只能通过持有特定的锁来访问。
+		
+		
 动态绑定(多态)
 	当直接或间接调用成员方法时，JVM会将方法和实际的内存进行绑定，会调用实际内存中的成员方法。
 	动态绑定和属性没有任何关系，属性的调用在哪里声明，在哪里使用。
@@ -332,6 +481,7 @@ String
 	第一种是用new()来新建对象的，它会在存放于堆中。每调用一次就会创建一个新的对象。运行时期创建。
 	第二种是先在栈中创建一个对String类的对象引用变量str2，然后通过符号引用去字符串常量池里找有没有"abc",如果没有，则将"abc"存放进字符串常量池，并令str2指向”abc”，
 	如果已经有”abc” 则直接令str2指向“abc”。编译期间完成。
-		
+
+	
 	
 	
