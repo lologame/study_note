@@ -1,0 +1,34 @@
+插入 insert into table_nale(column1,column2,...) values(value1,value2,...)
+更新 update table_name set column = new_value where column2 = some_value
+删除 delete from table_name where column = some_value
+复制 select * into new_table_name from old_table_name
+外键 create table table_name (id_p int foreign key refrences aother_table_name(column))
+索引 create index index_name on talble table_name(colum_name)
+添加列 alter table table_name add column_name data_type
+删除列 alter table table_name drop column column_name
+分数 select coulume_name count(column_name) group by column_name
+     select coulume_name count(column_name) group by column_name having count(column_name) > 3 
+
+数据类型
+	char(size)  定长  最大255
+	varchar(size) 变长 最大255
+	tinytext  最大255
+	text  最大65535
+	blob  最大65535
+	mediumblob 最大2^24
+	longText 最大2^32
+	longblob 最大2^32
+	
+	tinyint 255
+	smallint 65535
+	mediumint 2^24
+	int 2^32
+	bigint 
+	float
+	double
+	
+	date
+	datatime
+	timestamp
+	
+	

@@ -4,7 +4,45 @@
 	
 	DQL：数据库查询语言；(SELECT...)
 	DML：数据库操纵语言；(INSERT...)
-	DDL：数据库定义语言.（CREATE...）
+	
+	
+	插入 insert into table_nale(column1,column2,...) values(value1,value2,...)
+	更新 update table_name set column = new_value where column2 = some_value
+	删除 delete from table_name where column = some_value
+	复制 select * into new_table_name from old_table_name
+	外键 create table table_name (id_p int ,
+								  foreign key(id_p) refrences aother_table_name(column))
+		 create table table_name (id_p int ,
+								  constraint fk foreign key(id_p) refrences aother_table_name(column))
+	索引 create index index_name on talble table_name(colum_name)
+	添加列 alter table table_name add column_name data_type
+	删除列 alter table table_name drop column column_name
+	分组 select coulume_name count(column_name) group by column_name
+		 select coulume_name count(column_name) group by column_name having count(column_name) > 3 
+
+	数据类型
+		char(size)  定长  最大255
+		varchar(size) 变长 最大255
+		tinytext  最大255
+		text  最大65535
+		blob  最大65535
+		mediumblob 最大2^24
+		longText 最大2^32
+		longblob 最大2^32
+		
+		tinyint 255
+		smallint 65535
+		mediumint 2^24
+		int 2^32
+		bigint 
+		float
+		double
+		
+		date
+		datatime
+		timestamp
+		
+	
 	
 	一个完整的DQL语句总结：
 		select	
@@ -27,6 +65,24 @@
 			4.having     分组后再过滤
 			5.select     查询
 			6.order by   排序输出
+			
+	查询：
+		在进行多表连接查询的时候，尽量给表起别名，这样效率高。
+		在连接查询的时候，虽然使用了限制条件，但是匹配次数并没有减少
+		多表连接：a连接b ， 再 连接c
+			select 
+				xxx
+			from
+				a
+			join
+				b
+			on
+				条件
+			join
+				c
+			on
+				条件
+		
 			
 	约束：
 		主键：
@@ -123,6 +179,22 @@
 		删除索引
 			drop index 索引名 on 表名
 			
+	存储引擎
+		MyISam
+			使用三个文件表示每个表：
+				格式文件-存储表结构的定义(mytable.frm)
+				数据文件-存储表行的内容(mytable.MYD)
+				索引文件-存储表上索引(mytable.myi)
+			支持压缩，只读以节省空间
+				
+		InnoDB
+			每个InnoDB表在数据库目录帐以.frm格式文件表示
+			支持事务
+			mysql服务器崩溃后自动恢复
+			
+		Memory
+			表数据和索引在内存中
+						
 	数据库设计三范式：
 		1.要求有主键，每一个字段的原子性不可再分
 		2.非主键字段必须完全依赖主键，不能产生部分依赖（尽量别使用联合主键，容易产生部分依赖，产生数据冗余）
@@ -154,9 +226,9 @@
 			t_wife
 			wno          wname
 			------------------------
-			30            Lucy
-			20            Nancy
-			10            Lili
+			300            Lucy
+			200            Nancy
+			100            Lili
 		一对多设计：分两张表存储，在多的一方添加外键，这个外键引用一的一方的主键
 		多对多设计：分三张表（eg：学生表存储学生信息，课程表存储课程信息，在学生选课表中存储学生和选课的关系信息）
 			
