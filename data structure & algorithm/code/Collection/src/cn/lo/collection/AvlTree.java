@@ -26,14 +26,14 @@ public class AvlTree<T extends Comparable<? super T>> {
 	
 	private AvlNode<T> root;
 	
-	private int height(AvlNode node){
+	private int height(AvlNode<?> node){
 		return node == null ? -1 : node.height;
 	}
 	
 	private AvlNode<T> insert(T x,AvlNode<T> node){
 		
 		if(node == null){
-			return new AvlNode(x);
+			return new AvlNode<T>(x);
 		}
 		int res = x.compareTo(node.element);
 		if(res < 0){
@@ -65,14 +65,14 @@ public class AvlTree<T extends Comparable<? super T>> {
 	
 	private AvlNode<T> rotateWithLeftChild(AvlNode<T> node){
 		
-		AvlNode newNode = node.left;
+		AvlNode<T> newNode = node.left;
 		node.left = node.left.right;
 		newNode.right = node;
 		return newNode;
 	}
 	
 	private AvlNode<T> rotateWithRightChild(AvlNode<T> node){
-		AvlNode newNode = node.right;
+		AvlNode<T> newNode = node.right;
 		node.right = newNode.left;
 		newNode.left = node;
 		return newNode;

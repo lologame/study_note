@@ -26,8 +26,27 @@ public class Permutation {
 		}
 	}
 	
-	public static void main(String[] args) {
-		permutation("abcd");
+	public static void printToMaxOfNDigits(int n){
+		char[] cArr = new char[n];
+		printToMaxNDigitsRecursively(cArr,n,0);
 	}
+	
+	private static void printToMaxNDigitsRecursively(char[] cArr,int n, int pos){
+		if(pos == n){
+			System.out.print(cArr);
+			System.out.print(" ");
+			return;
+		}
+		for(int i = 0; i < 10 ; i++){
+			cArr[pos] = (char) ('0' + i);
+			printToMaxNDigitsRecursively(cArr,n,pos+1);
+		}
+	}
+	
+	public static void main(String[] args) {
+		printToMaxOfNDigits(2);
+	}
+	
+
 
 }
