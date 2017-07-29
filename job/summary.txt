@@ -48,6 +48,14 @@
 		5）PROPAGATION_NOT_SUPPORTED ，这当前级别的特点就是上下文中存在事务，则挂起事务，执行当前逻辑，结束后恢复上下文的事务。
 		6）PROPAGATION_NEVER ，PROPAGATION_NEVER传播级别要求上下文中不能存在事务，一旦有事务，就抛出runtime异常，强制停止执行！
 		7）PROPAGATION_NESTED ，该传播级别特征是，如果上下文中存在事务，则嵌套事务执行，如果不存在事务，则新建事务。
+	7.web应用在Tomcat中的启动流程
+		一个web应用对应一个context容器
+		1.启动Servlet容器。通过ServletContextListener接口监听ServletContext对象的生命周期，在web应用启动和终止时，会触发ServletContextEvent 事件，该事件由 ServletContextListener 来处理。
+		ServletContextListener提供contextInitialized(ServletContextEvent event)和contextDestroyed(ServletContextEvent event)方法。contextConfig在Tomcat创建Context容器时被加入到
+		servletContext中，contextConfig负责整个Web应用的配置文件（包括web.xml）的解析工作。
+		2.web应用的初始化。在contextConfig中实现。对web.xml进行解析,实例化Servlet，Filter，Listener。
+		3.Servlet初始化。调用init方法，将ServletConfig传递给Servlet。 
+
 三、oop
 	1.面向对象设计的solid原则
 		1).单一责任原则(Single responsibility)

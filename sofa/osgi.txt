@@ -1,0 +1,69 @@
+OSGI类加载器结构
+    父类加载器：负责加载以java.*开头的package和用户通过"org.osgi.famework.bootdelegation"指定的package
+    Bundle加载器:处理其他bundle委派的加载请求
+    其他类加载器：框架类加载器、线程上下文加载器
+
+    类加载顺序：
+        java* (父类加载器) -> 父类委派清单 (父类加载器) -> Import package (Bundle加载器) -> Require Package -> Bundle内部 -> Dynamic Import Package
+
+    Bundle的状态及转换
+        UNINSTALLED                                                                1
+        INSTALLED 已安装                                                            2
+        RESOLVED 能成功找到依赖包，导出包能被其他bundle使用                              4
+        STARTING BundleActivator的start方法已经被调用,但是还没执行结束                   8
+        ACTIVE   BundleActivator的start方法执行完毕                                   32
+        STOPPING BundleActivator的stop方法已经被调用，但还没有执行结束,执行结束后进入RESOLVED状态   16
+
+    Bundle的安装过程
+        BundleContext接口的installBundle(BundleLocation)方法，
+            包括产生新的BundleId，
+            读取MAINFEST.MF的内容，
+            进行有效性检验，
+            检查是否有Bundle重名，
+            确定Bundle对象的实现类，
+            将BUNDLE加入到Bundle仓库，
+            发布Bundle的INSTALLED状态转换事件
+    Bundle的解析过程：
+        根据MAINFEST.MF处理Bundle的依赖关系
+    启动过程 
+        执行Activator.start()
+    更新过程：
+        重新从Bundle文件加载类，生成新的Bundle实例.Bundle.upadate() Bundle.update(InputStream)
+    停止过程：
+        执行Activator.stop()
+    卸载过程
+        Bundle.uninstall()
+
+    BundleEvent FrameworkEnvent BundleListener FrameworkListener
+
+    系统Bundle
+        OSGI框架本身以一个Bundle的形式向其他Bundle提供资源，package和service
+
+    服务
+        服务: 在OSGI服务注册表中注册的POJO，可能实现了一个或多个接口
+        服务注册表：由OSGI提供的所有Bundle共享的数据区域
+        服务引用：指向服务对象的引用对象
+        服务注册：Bundle注册服务后返回的对象，Bundle可以根据这个对象进行注销或更新服务等操作
+        服务事件：服务被注销，修改时产生对应事件并且分派给监听者
+        服务事件监听者
+
+    installBundle()
+        1.读取MAINFEST，构建Bundle元数据信息BundleData
+        2.Bundle对象的校验和创建
+        3.将Bundle放入OSGI的bundle仓库中
+    
+    解析bundle
+
+    类加载流程
+        BundleLoader握有多个类加载器实例
+        最终执行BundleLoader.findClass(String name)
+            1.首先检查类名是否以java.*开头，如果是直接委派给parentClassLoader
+            2.通过this.bundle.getFramework().isBootDelegationPackage(pkgName))判断是否在启动委派列表中，如果是，传递给父类加载器
+            3.通过this.findImportedSource(String name)判断是否属于Import-package包中的类，如果是，则把加载请求委派给该package所属的bundle
+            4.查询this.findRequiredSource(pkgName, (KeyedHashSet)null)是否属于Require-Bundle
+            5.result = this.findLocalClass(name); 在本bundle中搜索
+            6.在DynamicImport-Package中查找
+
+    Spring DM
+        Extender Bundle对各个Bundle进行监视， 一旦发现处于Active状态，执行创建Spring上下文，并且是异步执行
+        

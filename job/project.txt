@@ -1,0 +1,113 @@
+爬虫：
+    1.爬虫组件
+        DownLoader     爬取页面
+        Schedular      管理待抓取的url，去重
+        PageProcessor  解析页面 抽取信息 使用Jsoup
+        Pipeline       抽取结果的处理，包括持久化等
+    2.对象
+        Page           页面    一个Page里面包含一个resultItems
+        Request        请求
+        ResultItems    爬取结果，Map
+    3.url 去重
+        1) 去重由duplicatedRemover实现
+        2）duplicatedRemover的三种具体实现：
+            HashSet
+            BloomFilter ： 利用多个不同的Hash函数来解决“冲突”。由谷歌Guava库里面的BloomFilter实现
+            Redis： 分布式、原子性
+
+    4.CountableThreadPool
+        在Executors.newFixedThreadPool之上做了一层封装，可以获取当前的活跃线程数。
+        爬虫的流程是提交到这个线程池里面的
+        活跃线程数使用AtomicInteger解决并发问题
+        private AtomicInteger threadAlive = new AtomicInteger();
+        核心代码
+        public void execute(final Runnable runnable) {
+            if (threadAlive.get() >= threadNum) {
+                try {
+                    reentrantLock.lock();
+                    while (threadAlive.get() >= threadNum) {
+                        try {
+                            condition.await(); //一旦出现活跃线程数到达总线程数，则阻塞
+                        } catch (InterruptedException e) {
+                        }
+                    }
+                } finally {
+                    reentrantLock.unlock();
+                }
+            }
+            threadAlive.incrementAndGet(); //活跃线程数原子加
+            executorService.execute(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        runnable.run();  //**** 爬虫流程 *****
+                    } finally {
+                        try {
+                            reentrantLock.lock();
+                            threadAlive.decrementAndGet();//活跃线程数原子减
+                            condition.signal();  //执行完一个线程则随机通知一个因为线程数已达上限而阻塞的线程
+                        } finally {
+                            reentrantLock.unlock();
+                        }
+                    }
+                }
+            });
+        }
+
+    5.解析HTML
+        解析HTML由Jsoup和Xsoup实现
+        jsoup 是一款Java 的HTML解析器，可直接解析某个URL地址、HTML文本内容。它提供了一套非常省力的API，可通过DOM，CSS以及类似于jQuery的操作方法来取出和操作数据。
+        例子：
+            String html = "<p>An <a href='http://example.com/'><b>example</b></a> link.</p>";
+            Document doc = Jsoup.parse(html);//解析HTML字符串返回一个Document实现
+            Element link = doc.select("a").first();//查找第一个a元素
+
+            String text = doc.body().text(); // "An example link"//取得字符串中的文本
+            String linkHref = link.attr("href"); // "http://example.com/"//取得链接地址
+            String linkText = link.text(); // "example""//取得链接地址中的文本
+        
+        Xsoup是基于Jsoup开发的HTML抽取器，提供了XPath支持。
+            String html = "<html><div><a href='https://github.com'>github.com</a></div></html>";
+            Document document = Jsoup.parse(html);
+            String result = Xsoup.select(document, "//a/@href").get();
+
+
+    6.爬虫流程
+        1.从Schedular中取出一个request，
+            如果request为空，说明request已经被取光，此时检查当前有没有活跃的线程，如果没有，则停止整个爬虫循环，否则，等待一个url
+            private void waitNewUrl() {
+                newUrlLock.lock();
+                try {
+                    //二次检查
+                    if (threadPool.getThreadAlive() == 0 && exitWhenComplete) {
+                        return;
+                    }
+                    //如果超过了emptySleepTime都还没有新的url，则认为已经爬完了
+                    newUrlCondition.await(emptySleepTime, TimeUnit.MILLISECONDS);
+                } catch (InterruptedException e) {
+                    logger.warn("waitNewUrl - interrupted, error {}", e);
+                } finally {
+                    newUrlLock.unlock();
+                }
+            }
+        2.根据request下载页面
+            2.1 根据request的domain来获取对应的CloseableHttpClient，此处使用了一个Map来缓存CloseableHttpClient
+            2.2 配置HttpClientRequestContext
+            2.3 获取这个request对应的page
+        3.将获取的page交给PageProcessor来处理
+            这个阶段完成两个工作，一个是获取到需要爬的链接，放入page的targetRequest中，二个是获取抓取结果，放入Page的ResultItemes中
+        4.将page的targeRequest中的request交个Sechdular
+        5.将page的ResultItem交给Pipeline
+        6.signalNewUrl
+            private void signalNewUrl() {
+                try {
+                    newUrlLock.lock();
+                    newUrlCondition.signalAll();
+                } finally {
+                    newUrlLock.unlock();
+                }
+            }
+    
+
+    7.FileCacheQueueScheduler
+        用两个文件  一个文件存储当前获取过的url， 一个文件存储处理过的url计数

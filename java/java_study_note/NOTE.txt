@@ -1,35 +1,35 @@
-�������ࣺ
-	����ϵ��1.������use�� 2.�ۺϣ�has�� 3.�̳У�is��
-���䣺
-	Filed���������Method����������Constructor����������
-	��Method������invoke�������������ð�װ�ڵ�ǰMethod�����еķ����� Object invoke��Object obj��Object ... args��
-�̳���Ƶļ��ɣ�
-	1������������������ڳ��ࣻ
-	2����Ҫʹ��protected��
-	3��ʹ�ü̳�ʵ��is-a��ϵ��
-	4������ÿ���̳з����������壬����Ҫʹ�ü̳У�
-	5���ڸ��Ƿ���ʱ����Ҫ�ı�Ԥ�ڵ���Ϊ��
-	6��ʹ�ö�̬������ʹ��������Ϣ��
-	7����Ҫ�����ʹ�÷��䡣
-������
-	���ô�������������ʱ����һ��ʵ����һ������ӿڵ����ࡣ
-	���еĴ����඼������Object�෽���е�toString , equals, hashCode.
-	�����ض������������Ԥ���һ��ӿ���˵��ֻ����һ�������ࡣ
-	������һ����public��final�����������ʵ�ֵ����нӿڶ���public��������Ͳ�����ĳ���ض��İ���
+对象与类：
+	类间关系：1.依赖（use） 2.聚合（has） 3.继承（is）
+反射：
+	Filed描述类的域；Method描述方法；Constructor描述构造器
+	在Method类中有invoke方法，允许调用包装在当前Method对象中的方法。 Object invoke（Object obj，Object ... args）
+继承设计的技巧：
+	1）将公共操作和域放在超类；
+	2）不要使用protected；
+	3）使用继承实现is-a关系；
+	4）除非每个继承方法都有意义，否则不要使用继承；
+	5）在覆盖方法时，不要改变预期的行为；
+	6）使用多态，而非使用类型信息；
+	7）不要过多的使用反射。
+代理：
+	利用代理可以在运行时创建一个实现了一组给定接口的新类。
+	所有的代理类都覆盖了Object类方法中的toString , equals, hashCode.
+	对于特定的类加载器和预设的一组接口来说，只能有一个代理类。
+	代理类一定是public和final。如果代理类实现的所有接口都是public，代理类就不属于某个特定的包。
 	
-	Object invoke��Object proxy , Method mothod, Object[] args��
-	�����˴���������÷���ʱϣ��ִ�еĶ�����
+	Object invoke（Object proxy , Method mothod, Object[] args）
+	定义了代理对象调用方法时希望执行的动作。
 	
-	static Object newProxyInstance��ClassLoader loader�� class[] interfaces, InvocationHandler handler��
-	����һ��ʵ��ָ���ӿڵĴ������ʵ�������еķ����������ô��������invoke������
+	static Object newProxyInstance（ClassLoader loader， class[] interfaces, InvocationHandler handler）
+	构造一个实现指定接口的代理类的实例。所有的方法都将调用代理对象的invoke方法。
 	
-�쳣��
+异常：
 
-	�쳣���ࣺ
-		1.�ܼ���쳣������ʱ��ǿ��Ҫ���飬������try-catch�������׳����쳣��������Exception
-		2.���ܼ����쳣���ڷ�����δ�����������й����з������쳣��������RuntimeException
+	异常分类：
+		1.受检查异常：编译时被强制要求检查，必须用try-catch代码块或抛出的异常。基类是Exception
+		2.不受检查的异常：在方法中未声明，在运行过程中发生的异常。基类是RuntimeException
 
-    �ṹ��		
+    结构：		
 										Throwable
 											|
 								|-----------------------|
@@ -42,69 +42,69 @@
                     NullpointerException     ArrayIndexOutofBoundsException
 
 					
-	�ɳ����µĴ�������RuntimeException,��������û�����⣬����I/O����֮������⵼�µ����������쳣��
+	由程序导致的错误属于RuntimeException,而程序本身没有问题，由于I/O错误之类的问题导致的属于其他异常。
 	
-	ʲôʱ����Ҫ�ڷ�������throw�Ӿ������쳣��ʲô�쳣����ʹ��throw�Ӿ����������
-	1������һ���׳��Ѽ���쳣�ķ�����
-	2���������й����з��ִ��󣬲�������throw����׳���һ���Ѽ���쳣��
-	3��������ִ���
-	4��jvm�����п�ʱ���ֵ��ڲ�����
+	什么时候需要在方法中用throw子句声明异常，什么异常必须使用throw子句进行声明：
+	1）调用一个抛出已检查异常的方法；
+	2）程序运行过程中发现错误，并且利用throw语句抛出了一个已检查异常；
+	3）程序出现错误；
+	4）jvm和运行库时出现的内部错误。
 	
-	�����дһ�����ǳ���ķ����������������û���׳��κ��쳣����ô��������ͱ��벶�񷽷������г��ֵ�ÿһ���쳣���������������throws˵�����г��ֳ������෽�����г����쳣�෶Χ��
+	如果编写一个覆盖超类的方法，而这个方法又没有抛出任何异常，那么这个方法就必须捕获方法代码中出现的每一个异常，不允许在子类的throws说明符中出现超过超类方法所列出的异常类范围。
 	
-	����ʹ��Throwable initCause��Throwable e�� ��װ�쳣
+	可以使用Throwable initCause（Throwable e） 封装异常
 	
-	ʹ��finally�Ӿ������Դ���ա�
+	使用finally子句进行资源回收。
 	
-	ʹ�ô���Դ��try���������ʽ��
-		try��Resource res = ...��
+	使用带资源的try语句的最简形式：
+		try（Resource res = ...）
 		{
 			work with res
 		}
-	try���˳�ʱ�����Զ�����res.close()��
+	try块退出时，会自动调用res.close()。
 
-���ͣ�
-	�����û�з������Ͷ������еĶ���������ͨ�ࡣ
-	���ۺ�ʱ����һ�����ͣ����Զ��ṩ��һ����Ӧ��ԭʼ���͡�ԭʼ���͵����־���ɾȥ���Ͳ�����ķ������������������ͱ��������滻Ϊ�޶����ͣ����޶��ı���ʹ��Object����
+泛型：
+	虚拟机没有泛型类型对象，所有的对象都属于普通类。
+	无论何时定义一个泛型，都自动提供了一个相应的原始类型。原始类型的名字就是删去类型参数后的泛型类型名。擦除类型变量，并替换为限定类型（无限定的变量使用Object）。
 	
-	Э�䷵�����ͣ�������ı����Ƿ������Է��ػ��෽���ķ������͵�ĳ�ֵ������͡�
+	协变返回类型：导出类的被覆盖方法可以返回基类方法的返回类型的某种导出类型。
 	
-	java����ת������ʵ��
-	1���������û�з��ͣ�ֻ����ͨ����ͷ�����
-	2�����е����Ͳ����������ǵ��޶������滻��
-	3���ŷ������ϳ������ֶ�̬��
-	4��Ϊ�������Ͱ�ȫ�ԣ���Ҫʱ����ǿ������ת����
+	java泛型转换的事实：
+	1）虚拟机中没有泛型，只有普通的类和方法。
+	2）所有的类型参数都用他们的限定类型替换。
+	3）桥方法被合成来保持多态。
+	4）为保持类型安全性，必要时插入强制类型转换。
 	
-	java���͵�Լ���;����ԣ�
-	1������ʹ�û�������ʵ�������Ͳ�����
-	2������ʱ���Ͳ�ѯֻ������ԭʼ���ͣ�
-	3�����ܴ������������͵����飻ʹ��Array.newInstance���Ƽ��ķ�ʽ��
-	4������ʵ�������ͱ�����
-		���ǿ���ͨ�����������췺�Ͷ��󡣵��ǲ���ֱ�ӵ���T.class.newInstance,���뽫Class<T>������Ϊ���Ͳ������뷽���У�
-	5)��ֹʹ�ô������ͱ����ľ�̬��ͷ�����
-	6�������׳��򲶻������ʵ����
+	java泛型的约束和局限性：
+	1）不能使用基本类型实例化类型参数；
+	2）运行时类型查询只适用于原始类型；
+	3）不能创建参数化类型的数组；使用Array.newInstance是推荐的方式；
+	4）不能实例化类型变量；
+		但是可以通过反射来构造泛型对象。但是不能直接调用T.class.newInstance,必须将Class<T>对象作为泛型参数传入方法中；
+	5)禁止使用带有类型变量的静态域和方法；
+	6）不能抛出或捕获泛型类的实例；
 	
-	���г������޶���ͨ����������Ͷ���д�룬�����������޶���ͨ������Դӷ��Ͷ����ȡ��
-	�����޽�ͨ�����get�ķ���ֵֻ�ܸ�ֵ��һ��Object��set�������ܱ����á�
-	��������A��A<?> �� A ���ʵĲ�ͬ���ڣ�����������Object�������ԭʼ��A���set������
+	带有超类型限定的通配符可以向泛型对象写入，带有子类型限定的通配符可以从泛型对象读取。
+	对于无界通配符，get的返回值只能赋值给一个Object，set方法不能被调用。
+	假设有类A，A<?> 和 A 本质的不同在于：可以用任意Object对象调用原始的A类的set方法。
 	
-	��ȡ����
-		��������һ�������������ȡ���ݣ�ʹ��? enxtends ͨ���
-		�������Ѷ���д��һ�����ݽṹ�ʹ��? superͨ���
-		��������������д����ʹ��ͨ���
+	存取法则：
+		如果你想从一个数据类型里获取数据，使用? enxtends 通配符
+		如果你想把对象写入一个数据结构里，使用? super通配符
+		如果既想读，又想写，不使用通配符
 	
-���ϣ�
+集合：
 
-	Ϊ�ٶȶ�ɢ�С�
+	为速度而散列。
 	
-	������Ļ����ӿ���Collection�ӿڣ�����ӿ�����������������
+	集合类的基本接口是Collection接口，这个接口有两个基本方法：
 		public interface Collection<E>
 		{
 			boolean add(E element);
 			Iterator<E> iterator();
 		}
 	
-		iterator �ӿڰ�������������
+		iterator 接口包含三个方法：
 		public interface Iterator<E>
 		{
 			E next();
@@ -112,11 +112,11 @@
 			void remove();
 		}
 		
-	����ļ��ϣ�
+	具体的集合：
 		ArrayList
-			��������ʵ��
+			基于数组实现
 		LinkedList
-			��������ʵ��
+			基于链表实现
 			    private static class Node<E> {
 					E item;
 					Node<E> next;
@@ -127,15 +127,15 @@
 						this.next = next;
 						this.prev = prev;
 				}
-				LinkedList����һ��modifyCount��������ÿ���޸Ķ��ᵼ��modifyCount++��
-				LinkedList$ListIterator���и�expectedModifyCount����ʵ����ListIteratorʱ���ʼ��ΪmodifyCount��
-				ͨ��ListIterator��ÿ�ζ��������޸Ķ��ᵼ��expectoedModifyCount++��
-				ͨ���ж�expectedModifyCount�Ƿ����modifyCount�ж��Ƿ�����ConCurrentModificationException();
-		ArrayDeque(ʹ��ѭ������ʵ�ֵ�˫�˶���)
-			ͨ��head��tail��ѭ���Ӽ�ʵ��ѭ��λ��
-			addFirst��head = ��head - 1�� & ��length - 1��;
-			addLast:  tail = (tail + 1) & ��length - 1��;
-			��ȡ�����趨��������С��2���ݴη�����
+				LinkedList中有一个modifyCount，链表的每次修改都会导致modifyCount++；
+				LinkedList$ListIterator中有个expectedModifyCount，在实例化ListIterator时会初始化为modifyCount，
+				通过ListIterator的每次对链表的修改都会导致expectoedModifyCount++；
+				通过判断expectedModifyCount是否等于modifyCount判断是否会出现ConCurrentModificationException();
+		ArrayDeque(使用循环数组实现的双端队列)
+			通过head和tail的循环加减实现循环位移
+			addFirst：head = （head - 1） & （length - 1）;
+			addLast:  tail = (tail + 1) & （length - 1）;
+			获取大于设定容量的最小的2的幂次方数：
 				initialCapacity |= (initialCapacity >>>  1);
 				initialCapacity |= (initialCapacity >>>  2);
 				initialCapacity |= (initialCapacity >>>  4);
@@ -144,32 +144,32 @@
 				initialCapacity++;
 				
 		HashSet
-			HashSet����HashMapʵ��
-			HashSet����һ��HashMap����Ϊmap
-			������HashSet��add(e)������ʵ���Ͼ��ǵ���map.put(e,obj)
+			HashSet基于HashMap实现
+			HashSet内有一个HashMap，设为map
+			当调用HashSet的add(e)方法，实际上就是调用map.put(e,obj)
 		TreeSet
-			���򼯺�
+			有序集合
 		EnumSet
-			����ö������ֵ�ļ���
+			包含枚举类型值的集合
 		LinkedHashSet
-			���Լ�¼��ֵ����˳��ļ���
+			可以记录键值插入顺序的集合
 		PriorityQueue
-			������Чɾ����СԪ�صļ���
+			允许高效删除最小元素的集合
 		HashMap
-			HashMap�д����һ��Node���飬�������Ϊtable����Node����Ľ����Ӧ��key��hashֵ��
-			Nodeʵ����entry����ӿڡ�����Node�д����nextNode�����á�
-			������HashMap��get(key)����ʱ����ȥ��table[hash(key)]����node = table[hash(key)];��node.key == key,�򷵻�node.value,�����node.next������
+			HashMap中存放了一个Node数组，设该数组为table，该Node数组的交标对应着key的hash值。
+			Node实现了entry这个接口。并且Node中存放着nextNode的引用。
+			当调用HashMap的get(key)方法时，会去找table[hash(key)]，设node = table[hash(key)];若node.key == key,则返回node.value,否则从node.next继续找
 		TreeMap
-			��ֵ�������е�ӳ��������ú����ʵ��
+			键值有序排列的映射表，采用红黑树实现
 		EnumMap
-			��ֵ����ö�����͵�ӳ���
+			键值属于枚举类型的映射表
 		LinkedHashMap
-			���Լ�ס��/ֵ����˳���ӳ���
-			ͨ����������뵽һ��˫��������ʵ��
+			可以记住键/值添加顺序的映射表
+			通过将插入项并入到一个双向链表中实现
 		WeakHashMap
 		IdentityHashMap
 		
-	���Ͽ�ܵĽӿڣ�
+	集合框架的接口：
 		Iterable
 		   |
 	   Collection                Map         Iterator     RandomAccess
@@ -180,7 +180,7 @@
 	       |         
       NavigableSet	
 
-	���Ͽ���е��ࣺ
+	集合框架中的类：
 						AbastractCollection
 	     |----------------------|-----------------------|------------------|
 	AbastractLIst          AbastractSet           AbastractQueue           |                       AbstractMap
@@ -190,201 +190,201 @@
 	|----------|
 LinkedList   ArrayList
 		
-	ͨ��ʹ����ͼ���Ի��������ʵ���˼��Ͻӿں�ӳ����ӿڵĶ���
+	通过使用视图可以获得其他的实现了集合接口和映射表接口的对象。
 		
 	
-���̣߳�
+多线程：
 
-	�߳�״̬��
+	线程状态：
 		new
 		Runnable
-		Blocked��һ���߳���ͼ��ȡһ���ڲ��Ķ������������������̳߳���
-		Waiting���ȴ�֪ͨ
-		Timed Waiting:�ȴ���ʱ��֪ͨ
+		Blocked：一个线程试图获取一个内部的对象锁，该锁被其他线程持有
+		Waiting：等待通知
+		Timed Waiting:等待超时或通知
 		Terminated
 		
-	�߳����ȼ���java������Ϊ10����������OS��Linux���̵߳����ȼ������ԡ�
+	线程优先级：java中设置为10个。依赖于OS，Linux中线程的优先级被忽略。
 	
-	Run���������׳��ܲ��쳣�����ܲ��쳣�ᵼ���߳���ֹ���ô���������ʵ��Thread.UncaughtExceptionHandler�ӿڡ�����ӿ���Ҫʵ�֣�
+	Run方法不能抛出受查异常。非受查异常会导致线程终止。该处理器必须实现Thread.UncaughtExceptionHandler接口。这个接口需要实现：
 	void uncaughtException(Thread t,Throwable e)
-	����ʹ��setUncaughtExceptionHandler��Thread��ľ�̬����setDefaultUncaughtExceptionHandlerΪ�����̰߳�װһ��Ĭ�ϵĴ�������
+	可以使用setUncaughtExceptionHandler或Thread类的静态方法setDefaultUncaughtExceptionHandler为所有线程安装一个默认的处理器。
 	
-	��������
+	条件对象：
 		Lock lock = new ReetrantLock();
-		Condition condition = lock.newCondition();//����һ��������ص���������
-		condition.await();//�����̷߳���ȴ���
-		condition.signalAll();����������ȴ����е������̵߳�����״̬
-		condition.signal();�Ӹ������ĵȴ��������ѡ��һ���߳̽���ȴ���
+		Condition condition = lock.newCondition();//返回一个与锁相关的条件对象。
+		condition.await();//将该线程放入等待集
+		condition.signalAll();解除该条件等待集中的所有线程的阻塞状态
+		condition.signal();从该条件的等待集中随机选择一个线程解除等待。
 		
-	����
-		���ǿ�����ģ���Ϊ�߳̿����ظ�����Ѿ����е�����������һ�����м��������ٶ�lock������Ƕ�׵��á�
-		��������������Ƭ�Σ��κ�ʱ��ֻ����һ���߳�ִ�б������Ĵ��롣
-		�����Թ�����ͼ���뱻��������ε��̡߳�
-		������ӵ��һ��������ص���������
-		ÿ���������������Щ�Ѿ����뱻�����Ĵ���ε����������е��̡߳�
+	锁：
+		锁是可重入的，因为线程可以重复获得已经持有的锁，锁保持一个持有计数来跟踪对lock方法的嵌套调用。
+		锁用来保护代码片段，任何时刻只能有一个线程执行被保护的代码。
+		锁可以管理试图进入被保护代码段的线程。
+		锁可以拥有一个或多个相关的条件对象。
+		每个条件对象管理那些已经进入被保护的代码段但还不能运行的线程。
 		
-		ÿ��������һ���ڲ��������Ҹ�����һ���ڲ�������������������Щ��ͼ����synchronized�������̣߳���������������Щ����wait���̡߳�
+		每个对象有一个内部锁，并且该锁有一个内部条件。由锁来管理那些试图进入synchronized方法的线程，由条件来管理那些调用wait的线程。
 		
-		�����ʹ�������ʱ��ΪʲôҪ�������߳���ͬһ��������ͬ����
-			1.��֤һ���̵߳�д�������߳̿ɼ���
-			2.��֤һ���̶߳��������ݲ��ǹ��ڵġ�
+		当访问共享变量时，为什么要求所有线程有同一个锁进行同步：
+			1.保证一个线程的写对其他线程可见；
+			2.保证一个线程读到的数据不是过期的。
 		
-		���һ��������synchronized�ؼ�����������ô�����������������������
-		wait��������һ���̵߳��ȴ����С�notifyAll��notify��������ȴ��̵߳�����״̬��
-		���ľ����ԣ�1.��һ������2.�����ж�������ͼ��������̣߳�3.�����趨��ʱ
+		如果一个方法用synchronized关键字声明，那么对象的锁将保护整个方法。
+		wait方法添加一个线程到等待集中。notifyAll／notify方法解除等待线程的阻塞状态。
+		锁的局限性：1.单一条件；2.不能中断正在试图获得锁的线程；3.不能设定超时
 
-		ͬ��������
-			synchronized��obj����
+		同步阻塞：
+			synchronized（obj）｛
 			
-			��
+			｝
 
 	volatile
-		���Է�volatile�������ж�д��ʱ��ÿ���߳��ȴ��ڴ濽��������CPU�����С����������ж��CPU��ÿ���߳̿����ڲ�ͬ��CPU�ϱ�����������ζ��ÿ���߳̿��Կ�������ͬ��CPU cache�С�
-		������������volatile�ģ�JVM��֤��ÿ�ζ����������ڴ��ж�������CPU cache��һ����
+		当对非volatile变量进行读写的时候，每个线程先从内存拷贝变量到CPU缓存中。如果计算机有多个CPU，每个线程可能在不同的CPU上被处理，这意味着每个线程可以拷贝到不同的CPU cache中。
+		而声明变量是volatile的，JVM保证了每次读变量都从内存中读，跳过CPU cache这一步。
 		
-		�ڷ���volatile����ʱ����ִ�м������������Ҳ�Ͳ���ʹִ���߳����������volatile������һ�ֱ�sychronized�ؼ��ָ���������ͬ������
+		在访问volatile变量时不会执行加锁操作，因此也就不会使执行线程阻塞，因此volatile变量是一种比sychronized关键字更轻量级的同步机制
 			
-		�������Ա�֤�ɼ�����ԭ���ԣ�volatileֻ��֤�ɼ��ԣ�
+		加锁可以保证可见性与原子性，volatile只保证可见性,保证从内存中拿到的值是最新的，但对这个值得操作不保证是原子的；
 
-	����޶Ȱ�ȫ�ԣ�
-		һ�����ڶ�ȡ���ı�������ȷ����ĳ���߳��趨����ʵֵ��
-		����޶Ȱ�ȫ��Ӧ���ڳ���64λ��ֵ����(double,long)��������б�����JVM������64λ�Ķ���д����Ϊ����32λ�Ĳ���������ʹ��volatile��������
+	最低限度安全性：
+		一个现在读取到的变量至少确定是某个线程设定的真实值。
+		最低限度安全性应用于除了64位数值变量(double,long)以外的所有变量，JVM允许将64位的读或写划分为两个32位的操作。除非使用volatile或者锁。
 	
-	�ֲ߳̾�������
-		����A�Ķ���Ϊ����ҪΪÿһ���̹߳���һ��A��ʵ��������ʹ�����´��룺
+	线程局部变量：
+		以类A的对象为例，要为每一个线程构造一个A的实例，可以使用如下代码：
 		public static final ThreadLocal<A> a = new ThreadLocal<A>(){
 			protected Abastract initialValue(){
 				return new A();
 			}
 		}
-		Ҫ����a�ľ��巽�������Ե��ã� a.get().mothod();
-		�ڵ���get()����ʱ���ͻ����initialValue�������������ڵ�ǰ�̵߳�ʵ����
+		要访问a的具体方法，可以调用： a.get().mothod();
+		在调用get()方法时，就会调用initialValue方法，返回属于当前线程的实例。
 		
-		ThreadLocalͨ�����ڷ�ֹ�ڻ��ڿɱ�ĵ����ȫ�ֱ���������г��ֲ���ȷ�Ĺ�������Ϊÿ��ʹ�������߳�ά��һ�ݵ����Ŀ�����
+		ThreadLocal通常用于防止在基于可变的单体或全局变量的设计中出现不正确的共享。它为每个使用它的线程维护一份单独的拷贝。
 		
 	tryLock
-		boolean tryLock() ���Ի������û�з�������������ɹ������档���������������õ�������ʹ�����й�ƽ�������ԣ����������߳��Ѿ��ȴ��ܾ�Ҳ����ˡ�
-		boolean tryLock(long time,TimeUnit unit) ���Ի����������ʱ�䲻�ᳬ��������ֵ���߳��ڻ�����ڼ䱻�жϽ��׳�InterruptedException�쳣��
-		lockInterruptibly(): ����������ǻ᲻ȷ���ط����������൱�ڳ�ʱ���޵�tryLock
+		boolean tryLock() 尝试获得锁而没有发生阻塞；如果成功返回真。这个方法会抢夺可用的锁，即使该锁有公平加锁策略，即便其他线程已经等待很久也是如此。
+		boolean tryLock(long time,TimeUnit unit) 尝试获得锁，阻塞时间不会超过给定的值，线程在获得锁期间被中断将抛出InterruptedException异常。
+		lockInterruptibly(): 获得锁，但是会不确定地发生阻塞。相当于超时无限的tryLock
 		
-	stop��suspend������
-		stop��ֹ�߳�ʱ�����׵��¶���״̬���ƻ�������stop���߳��޷�֪��ʲôʱ�����stop�ǰ�ȫ�ġ�����ʹ����ϣ��ֹͣ�̵߳�ʱ��Ӧ���ж��̣߳����жϵ��̻߳��ڰ�ȫ��ʱ��ֹͣ��
-		suspend���������������suspend����һ�����������̣߳��ͻ�����⡣
+	stop和suspend的问题
+		stop终止线程时，容易导致对象状态被破坏，调用stop的线程无法知道什么时候调用stop是安全的。现在使用在希望停止线程的时候应该中断线程，被中断的线程会在安全的时候停止。
+		suspend的问题是在如果用suspend挂起一个持有锁的线程，就会出问题。
 		
-	�������У�
+	阻塞队列：
 		blokingQueue
-			add element remove���׳��쳣
-			offer peek poll �����׳��쳣
-			take remove ������
-		ArrayBlockingQueue(int capacity , boolean fair) ����һ������ָ�������͹�ƽ�����õ��������У�ʹ��ѭ������ʵ��
-		LinkedBlockingQueue() �����޵��������л�˫����У�ʹ������ʵ��
-		LinkedBlockingQueue(int capacity) ����ָ�������������޵��������л�˫����У�ʹ������ʵ��
-		DelayQueue ֻ���ӳ��Ѿ���ʱ��Ԫ�ؿ��ԴӶ������Ƴ���Ԫ�ر���ʵ��Delayed�ӿڡ�
+			add element remove会抛出异常
+			offer peek poll 不会抛出异常
+			take remove 会阻塞
+		ArrayBlockingQueue(int capacity , boolean fair) 构造一个带有指定容量和公平性设置的阻塞队列，使用循环数组实现
+		LinkedBlockingQueue() 无上限的阻塞队列或双向队列，使用链表实现
+		LinkedBlockingQueue(int capacity) 根据指定容量构建有限的阻塞队列或双向队列，使用链表实现
+		DelayQueue 只有延迟已经超时的元素可以从队列中移出，元素必须实现Delayed接口。
 		PriorityBlockingQueue
 		
-	�̰߳�ȫ�ļ��ϣ�
+	线程安全的集合：
 	
 	Callable<V>
-		call() ����һ�����������������
-	Future<V>  �����첽����Ľ�� 
+		call() 运行一个将产生结果的任务
+	Future<V>  保存异步计算的结果 
 		V get()
 		V get(long time,TimeUnit unit)
-			��ȡ���
-		boolean cancle(boolean mayInterrupt) ����ȡ�������ִ�У����mayInterruptΪtrue�����ͻᱻ�жϡ�ȡ���ɹ�������true��
+			获取结果
+		boolean cancle(boolean mayInterrupt) 尝试取消任务的执行，如果mayInterrupt为true，它就会被中断。取消成功，返回true。
 		boolean isCancelled()
 		boolean isDone
 	FutureTask<V>
 		FutureTask(Callable task) 
-		FutureTask(Runnable task��V result) 
-			����һ����ʹFuture����Runnable�Ķ���
+		FutureTask(Runnable task，V result) 
+			返回一个即使Future又是Runnable的对象
 		
-	ִ����
-		ʲôʱ��ʹ���̳߳أ�
-			�����˴����������ں̵ܶ��߳�
-			���ٲ����̵߳���Ŀ
+	执行器
+		什么时候使用线程池：
+			创建了大量的生命期很短的线程
+			减少并发线程的数目
 		
 		Excutors
-			��̬����
-			Executors.newCachedAThreadPool() ��Ҫʱ�������̣߳������̱߳�����60s
-			Executors.newFixedThreadPool(int num)   �����̶��߳���
-			Executors.newSingleAThreadPool()   ���߳�
+			静态方法
+			Executors.newCachedAThreadPool() 必要时创建新线程，空闲线程被保留60s
+			Executors.newFixedThreadPool(int num)   包含固定线程数
+			Executors.newSingleAThreadPool()   单线程
 		ExcutorService
 			Future<T> submit(Callable<T> task)
 			Future<T> submit(Runnable task , T result)
 			Future<?> submit(Runnable task)
-				�ύ����
+				提交任务
 			void shutdown()
 		ScheduledExcutorService
 			ScheduleFuture<V> schedule(Callable<V> task, long time, TimeUnit unit)
 			ScheduleFuture<?> schedule(Runnable<V> task, long time, TimeUnit unit)
-			Ԥ����ָ����ʱ��֮��ִ��	
+			预定在指定的时间之后执行	
 			ScheduledFuture<V>  scheduledAtFixedRate(Runable task, long initialDelay , long period ,TimeUnit unit)
-			Ԥ���ڳ�ʼ��ʱ�������Ե�ִ��
+			预定在初始延时后周期性的执行
 		ExcutorService
 			T invokeAny(Collection<Callable<T>> tasks)
 			T invokeAny(Collection<Callable<T>> tasks,long timeout,TimeUnit unit)
-			ִ�и��������񣬷�������һ������Ľ��
+			执行给定的任务，返回其中一个任务的结果
 			List<Future<T>> invokeAll(Collection<Callable<T>> tasks)
 			List<Future<T>> invokeAll(Collection<Callable<T>> tasks,long timeout ,TimeUnit unit)
 			
-	Fork-Join���
-		Fork/Join�������һ���Ѵ�����ָ�����ɸ�С�������ջ���ÿ��С��������õ����������Ŀ�ܡ�Forkָ�з֣�Joinָ�ϲ���
+	Fork-Join框架
+		Fork/Join框架是是一个把大任务分割成若干个小任务，最终汇总每个小任务结果后得到大任务结果的框架。Fork指切分，Join指合并。
 		
-		������ȡ��work-stealing���㷨��ָĳ���̴߳�������������ȡ������ִ�С�Ϊ�˼�����ȡ�����̺߳ͱ���ȡ�����߳�֮��ľ�����
-								 ͨ����ʹ��˫�˶��У�����ȡ�����߳���Զ��˫�˶��е�ͷ��������ִ�У�����ȡ������߳���Զ��˫
-								 �˶��е�β��������ִ�С�
+		工作窃取（work-stealing）算法是指某个线程从其他队列里窃取任务来执行。为了减少窃取任务线程和被窃取任务线程之间的竞争，
+								 通常会使用双端队列，被窃取任务线程永远从双端队列的头部拿任务执行，而窃取任务的线程永远从双
+								 端队列的尾部拿任务执行。
 								 
-		Fork/Join����ṩ�������������ࣺ
-			RecursiveAction������û�з��ؽ��������
-			RecursiveTask �������з��ؽ��������		
+		Fork/Join框架提供了以下两个子类：
+			RecursiveAction：用于没有返回结果的任务。
+			RecursiveTask ：用于有返回结果的任务。		
 			
-		ForkJoinPool ��ForkJoinTask��Ҫͨ��ForkJoinPool��ִ�У�����ָ��������������ӵ���ǰ�����߳���ά����˫�˶����У�������е�ͷ������һ����
-						���̵߳Ķ�������ʱû������ʱ��������������������̵߳Ķ��е�β����ȡһ������
+		ForkJoinPool ：ForkJoinTask需要通过ForkJoinPool来执行，任务分割出的子任务会添加到当前工作线程所维护的双端队列中，进入队列的头部。当一个工
+						作线程的队列里暂时没有任务时，它会随机从其他工作线程的队列的尾部获取一个任务。
 						
-	    ForkJoinTask��һ����������Ҫ������������Ҫʵ��compute����������������������Ҫ�ж������Ƿ��㹻С������㹻С��ֱ��ִ������
-		            ������㹻С���ͱ���ָ������������ÿ���������ڵ���fork����ʱ���ֻ����compute������������ǰ�������Ƿ���Ҫ������
-					����������������Ҫ�����ָ��ִ�е�ǰ�����񲢷��ؽ����ʹ��join������ȴ�������ִ���겢�õ�������
+	    ForkJoinTask与一般的任务的主要区别在于它需要实现compute方法，在这个方法里，首先需要判断任务是否足够小，如果足够小就直接执行任务。
+		            如果不足够小，就必须分割成两个子任务，每个子任务在调用fork方法时，又会进入compute方法，看看当前子任务是否需要继续分
+					割成孙任务，如果不需要继续分割，则执行当前子任务并返回结果。使用join方法会等待子任务执行完并得到其结果。
 					
-	�ݳ���
-		�ڶ����ʼ��û���ǰ�ͷ�����
-		�ڹ��캯���д����ڲ���ʵ������ʽ�ķ������󡣿���ʹ�ù�����������this�����ڹ����ڼ��ݳ���
+	逸出：
+		在对象初始化没完毕前就发布。
+		在构造函数中创建内部类实例会隐式的发布对象。可以使用工厂方法放置this引用在构造期间逸出。
 		
-	��ȫ������
-		Ϊ�˰�ȫ����������������Լ������״̬����ͬʱ�������߳̿ɼ���
-		������
-			1.ͨ����̬��ʼ������ʼ����������á�
-			2.���������ô洢��volatile�����AtomicReferece
-			3.���������ô洢����ȷ�����Ķ����final����
-			4.���������ô洢��������ȷ���������С�
-		���������У�ʹ�ú͹����������У�������£�
-			1.�߳����ƣ��ö����̶߳�ռ��ֻ�б�ռ�������߳��޸ġ�
-			2.����ֻ�����κ��̶߳������޸ġ�
-			3.�����̰߳�ȫ��һ���̰߳�ȫ�Ķ������ڲ�����ͬ�������������߳��������ͬ��������ͨ�������ӿ�������ʡ�
-			4.���ػ��Ķ���ֻ��ͨ�������ض����������ʡ�
+	安全发布：
+		为了安全发布，对象的引用以及对象的状态必须同时对其他线程可见。
+		条件：
+			1.通过静态初始化器初始化对象的引用。
+			2.将它的引用存储到volatile域或者AtomicReferece
+			3.将它的引用存储到正确创建的对象的final域中
+			4.将它的引用存储到由锁正确保护的域中。
+		并发程序中，使用和共享对象的有校策略如下：
+			1.线程限制，让对象被线程独占，只有被占有他的线程修改。
+			2.共享只读。任何线程都不能修改。
+			3.共享线程安全：一个线程安全的对象在内部进行同步，所以其他线程无须额外同步，可以通过公共接口随意访问。
+			4.被守护的对象：只能通过持有特定的锁来访问。
 		
 		
-��̬��(��̬)
-	��ֱ�ӻ��ӵ��ó�Ա����ʱ��JVM�Ὣ������ʵ�ʵ��ڴ���а󶨣������ʵ���ڴ��еĳ�Ա������
-	��̬�󶨺�����û���κι�ϵ�����Եĵ���������������������ʹ�á�
+动态绑定(多态)
+	当直接或间接调用成员方法时，JVM会将方法和实际的内存进行绑定，会调用实际内存中的成员方法。
+	动态绑定和属性没有任何关系，属性的调用在哪里声明，在哪里使用。
 	
-��������
-	�����ĸ����صķ�����ֻ�Ͳ��������ͣ�˳�򣬸����й�ϵ
+方法重载
+	调用哪个重载的方法，只和参数的类型，顺序，个数有关系
 	
-java�ڴ�ռ�
-	ջ����Ż����������ݺͶ�������ã���������������ջ�У�������ڶ���
-	�ѣ������new����������
-	��̬�򣺴���ڶ�������static����ľ�̬��Ա
+java内存空间
+	栈：存放基本类型数据和对象的引用，但对象本身不放在栈中，而存放在堆中
+	堆：存放用new产生的数据
+	静态域：存放在对象中用static定义的静态成员
 	
 finally
 	
-	����2
+	返回2
 	i = 0;
 	try{
 		return i++;
 	}finally{
 		return ++i;
 	}
-	����0
+	返回0
 	i = 0;
 	try{
 		return i++;
@@ -392,95 +392,95 @@ finally
 		++i;
 	}
 	
-final��
-	��̬���� static final ����Ҫ������Ϳ��Ի�ȡ
+final：
+	静态常亮 static final 不需要加载类就可以获取
 	
 finalize
-	���ڴ��еĶ����Լ����Ĺ����������û�б����ڴ����������ָ��ʱ�������ö��󣬻ᱻ�������������ա� 
+	堆内存中的对象以及它的关联对象如果没有被堆内存以外的引用指向时，是无用对象，会被垃圾回收器回收。 
 	
 protected
-	����Ȩ��(ͬ�࣬ͬ��������) ����Ǻͷ����ĵ����߱Ƚ�
-	clone���������ӣ�����
-	ע�ⷽ�����ṩ�ߺ͵����ߵĹ�ϵ������
+	访问权限(同类，同包，子类) 这儿是和方法的调用者比较
+	clone方法的例子！！！
+	注意方法的提供者和调用者的关系！！！
 	
 
-javaע��ԭ��
-	java.lang.annotation�ṩ����Ԫע��
-	@Ducumented ��ע���Ƿ������JavaDoc��
-	@Retention ������ע�����������
-	@Target ��ע������ʲô�ط�
-	@Inherited �� �Ƿ���������̳и�ע��
+java注解原理
+	java.lang.annotation提供四种元注解
+	@Ducumented －注解是否包含在JavaDoc中
+	@Retention －定义注解的生命周期
+	@Target －注解用于什么地方
+	@Inherited － 是否允许字类继承该注解
 
-	@Retention ������ע�����������
-		RetentionPolicy.SOURCE : �ڱ���׶ζ��������������Ͳ���������
-		RetentionPolicy.CLASS: ������ص�ʱ��������Ĭ�ϣ�
-		RetentionPolicy.RUNTIME:ʼ�ղ�����
-	@Target ����ʾע������ʲô�ط�
-		ElementType.CONSTRUCTOR   ������
-		ElementType.FIELD   ��Ա����
-		ElementType.LOCAL_VARIABLE �ֲ�����
-		ElementType.METHOD ����
+	@Retention －定义注解的生命周期
+		RetentionPolicy.SOURCE : 在编译阶段丢弃。编译结束后就不会有意义
+		RetentionPolicy.CLASS: 在类加载的时候丢弃。（默认）
+		RetentionPolicy.RUNTIME:始终不丢弃
+	@Target －表示注解用于什么地方
+		ElementType.CONSTRUCTOR   构造器
+		ElementType.FIELD   成员属性
+		ElementType.LOCAL_VARIABLE 局部变量
+		ElementType.METHOD 方法
 		ElementType.PACKAGE
-		ElementType.PARAMETER ����
-		ElementType.TYPE �ࡢ�ӿڡ�enum����
+		ElementType.PARAMETER 参数
+		ElementType.TYPE 类、接口、enum生命
 
-	Annotationsֻ֧�ֻ������͡�String��ö�����͡�ע�������е����Ա�����ɷ������������ṩĬ��ֵ��
-	eg��
-		@Target��ElementType.METHOD��
+	Annotations只支持基本类型、String及枚举类型。注释中所有的属性被定义成方法，并允许提供默认值。
+	eg：
+		@Target（ElementType.METHOD）
 		@Retention(RetentionPolicy.RUNTIME)
 		@interface MyAnnotation{
 			public enum SomeEnum{A,B,C}
-			String somePropery() default ��property��;
+			String somePropery() default “property”;
 			SomeEnum someEnum() default SomeEnum.A;
 		}
 
 
-	���ע����ֻ��һ�����ԣ�����ֱ������Ϊ��value����ʹ��ʱ�����ٱ�����������
+	如果注解中只有一个属性，可以直接命名为“value”，使用时无需再标明属性名。
 
-	ʹ��ע�⣺
-	eg��
-		@MyAnnotation��someProperty �� ��prop����someEnum �� MyAnnotation.SomeEnum.B��
+	使用注解：
+	eg：
+		@MyAnnotation（someProperty ＝ “prop”，someEnum ＝ MyAnnotation.SomeEnum.B）
 		public void someMethod(){}
 
-	��ȡע�������
-		����Annotation�����õĳ��϶�����һ��ִ�л���/������ͨ�������������Ԫ����Ȼ���������ȡ�ж���
-		eg��
+	获取注解参数：
+		但凡Annotation起作用的场合都是有一个执行机制/调用者通过反射获得了这个元数据然后根据它采取行动。
+		eg：
 			  Method[] declaredMethods = SomeClass.class.getDeclaredMethods();
 	       	 	  for (Method method : declaredMethods) {
 	            		Annotation[]  methodAnnotations = method.getAnnotations();
 	            		Annotation[][] parameterAnnotationsArray = method.getParameterAnnotations();
 	        	  }	
-		��ȡָ����ע��
-		eg��
+		获取指定的注解
+		eg：
 			MyAnnotation myAnnotation =method.getAnnotation(MyAnnotation.class);
 		
 	
-java�̳з�������˳��
-	���b��̳���a�࣬��main������new��b�Ķ���(��������)����ô��ִ�е�˳���ǣ�	
-		����a�ľ�̬�����-->��b�ľ�̬�����-->����a�ķǾ�̬�����-->����a���޲ι��캯��-->����b�ķǾ�̬�����-->����b���޲ι��캯��	
+java继承方法调用顺序：
+	如果b类继承自a类，在main方法中new出b的对象(不带参数)，那么他执行的顺序是：	
+		父类a的静态代码块-->类b的静态代码块-->父类a的非静态代码块-->父类a的无参构造函数-->子类b的非静态代码块-->子类b的无参构造函数	
 	
-��̬��
-	OOP�������ԣ���װ,�̳У���̬��
-	���壺ͬһ��Ϣ���Ը��ݷ��Ͷ���Ĳ�ͬ�����ö��ֲ�ͬ����Ϊ��ʽ��
-	ʵ�ֶ�̬�ļ�������̬�󶨡�(ִ���ڼ��ж����ö����ʵ�����͡�)
-	���ã����
+多态：
+	OOP三大特性：封装,继承，多态。
+	定义：同一消息可以根据发送对象的不同而采用多种不同的行为方式。
+	实现多态的技术：动态绑定。(执行期间判断引用对象的实际类型。)
+	作用：解耦。
 	
-����jdk��jre
-	JDK�µ�lib����java����������jar�����Ǹ�JDK�õģ�����JDK����һЩ���ߣ�����Ҫ�ø�Ŀ¼�е��ļ������磬�������ȡ�  
-	JRE�µ�libֻ������java�����jar������ΪJVM����ʱ���õġ��������еı�׼��⣬����չ�ࡣ  
-	JDK�µ�JRE�µ�lib�ǿ��������У�����ʱ��Ҫ��jar����
+关于jdk和jre
+	JDK下的lib包括java开发环境的jar包，是给JDK用的，例如JDK下有一些工具，可能要用该目录中的文件。例如，编译器等。  
+	JRE下的lib只是运行java程序的jar包，是为JVM运行时候用的。包括所有的标准类库，和扩展类。  
+	JDK下的JRE下的lib是开发环境中，运行时需要的jar包。
 	
-���ھ�̬�ڲ���ͷǾ�̬�ڲ���
-	��̬�ڲ���û����ָ���ⲿ�����á�
-	�Ǿ�̬�ڲ����в�����������̬��Ա��
-	���ܹ��Ӿ�̬�ڲ���Ķ����з����ⲿ��ķǾ�̬��Ա��
+关于静态内部类和非静态内部类
+	静态内部类没有了指向外部的引用。
+	非静态内部类中不可以声明静态成员。
+	不能够从静态内部类的对象中访问外部类的非静态成员。
 	
 String
 	String str1 = new String("abc");
 	String str2 = "abc";
-	��һ������new()���½�����ģ������ڴ���ڶ��С�ÿ����һ�ξͻᴴ��һ���µĶ�������ʱ�ڴ�����
-	�ڶ���������ջ�д���һ����String��Ķ������ñ���str2��Ȼ��ͨ����������ȥ�ַ���������������û��"abc",���û�У���"abc"��Ž��ַ��������أ�����str2ָ��abc����
-	����Ѿ��С�abc�� ��ֱ����str2ָ��abc���������ڼ���ɡ�
+	第一种是用new()来新建对象的，它会在存放于堆中。每调用一次就会创建一个新的对象。运行时期创建。
+	第二种是先在栈中创建一个对String类的对象引用变量str2，然后通过符号引用去字符串常量池里找有没有"abc",如果没有，则将"abc"存放进字符串常量池，并令str2指向”abc”，
+	如果已经有”abc” 则直接令str2指向“abc”。编译期间完成。
 
 	
 	
